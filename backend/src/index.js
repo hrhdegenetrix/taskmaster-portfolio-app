@@ -5,7 +5,11 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const { PrismaClient } = require('@prisma/client');
 require('dotenv').config();
+
+// Initialize Prisma client
+const prisma = new PrismaClient();
 
 // Import routes
 const taskRoutes = require('./routes/tasks');
@@ -49,12 +53,27 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/upload', uploadRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    version: '1.0.0'
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+    
+    res.json({ 
+      status: 'healthy', 
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0'
+    });
+  } catch (error) {
+    console.error('Database health check failed:', error);
+    res.status(503).json({ 
+      status: 'unhealthy', 
+      database: 'disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+      version: '1.0.0'
+    });
+  }
 });
 
 // Welcome endpoint
@@ -95,14 +114,30 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
+// Database connection test at startup
+async function testDatabaseConnection() {
+  try {
+    console.log('🔄 Testing database connection...');
+    await prisma.$connect();
+    console.log('✅ Database connected successfully!');
+    console.log(`🗄️  Database URL: ${process.env.DATABASE_URL ? 'Configured' : 'Not configured'}`);
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    console.error('🚨 Please check your DATABASE_URL environment variable');
+  }
+}
+
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 TaskMaster API server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 API URL: http://localhost:${PORT}/api`);
   if (process.env.NODE_ENV !== 'production') {
     console.log(`🎯 Health check: http://localhost:${PORT}/api/health`);
   }
+  
+  // Test database connection
+  await testDatabaseConnection();
 });
 
 module.exports = app; 
