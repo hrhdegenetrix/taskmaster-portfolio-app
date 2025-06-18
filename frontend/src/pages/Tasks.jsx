@@ -19,6 +19,10 @@ import {
 } from 'lucide-react'
 import { useTask } from '../contexts/TaskContext'
 import { format, isToday, isTomorrow, isPast } from 'date-fns'
+import TaskForm from '../components/Forms/TaskForm'
+import { taskService } from '../services/api'
+import { useMutation } from 'react-query'
+import toast from 'react-hot-toast'
 
 const Tasks = () => {
   const {
@@ -31,11 +35,59 @@ const Tasks = () => {
     setViewMode,
     selectedTasks,
     toggleTaskSelection,
-    isLoading
+    isLoading,
+    invalidateQueries
   } = useTask()
 
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
+
+  // Toggle task completion mutation
+  const toggleCompletionMutation = useMutation(
+    ({ taskId, completed, status }) => taskService.updateTask(taskId, { 
+      completed, 
+      status,
+      completedAt: completed ? new Date().toISOString() : null
+    }),
+    {
+      onSuccess: () => {
+        toast.success('Task updated! 🎉')
+        invalidateQueries()
+      },
+      onError: () => toast.error('Failed to update task 😕')
+    }
+  )
+
+  // Delete task mutation
+  const deleteTaskMutation = useMutation(
+    (taskId) => taskService.deleteTask(taskId),
+    {
+      onSuccess: () => {
+        toast.success('Task deleted! 🗑️')
+        invalidateQueries()
+      },
+      onError: () => toast.error('Failed to delete task 😕')
+    }
+  )
+
+  // Handle task completion toggle
+  const handleToggleCompletion = (task) => {
+    const newCompleted = !task.completed
+    const newStatus = newCompleted ? 'COMPLETED' : (task.status === 'COMPLETED' ? 'PENDING' : task.status)
+    
+    toggleCompletionMutation.mutate({
+      taskId: task.id,
+      completed: newCompleted,
+      status: newStatus
+    })
+  }
+
+  // Handle task deletion with confirmation
+  const handleDeleteTask = (task) => {
+    if (window.confirm(`Are you sure you want to delete "${task.title}"? This can't be undone! 🗑️`)) {
+      deleteTaskMutation.mutate(task.id)
+    }
+  }
 
   // Priority colors
   const getPriorityColor = (priority) => {
@@ -235,6 +287,8 @@ const Tasks = () => {
                 index={index}
                 viewMode={viewMode}
                 onEdit={setEditingTask}
+                onToggleCompletion={handleToggleCompletion}
+                onDelete={handleDeleteTask}
                 getPriorityColor={getPriorityColor}
                 getStatusColor={getStatusColor}
                 getDueDateDisplay={getDueDateDisplay}
@@ -249,7 +303,7 @@ const Tasks = () => {
       {/* Create Task Modal */}
       <AnimatePresence>
         {showCreateForm && (
-          <CreateTaskModal
+          <TaskForm
             onClose={() => setShowCreateForm(false)}
             categories={categories}
             tags={tags}
@@ -260,7 +314,7 @@ const Tasks = () => {
       {/* Edit Task Modal */}
       <AnimatePresence>
         {editingTask && (
-          <EditTaskModal
+          <TaskForm
             task={editingTask}
             onClose={() => setEditingTask(null)}
             categories={categories}
@@ -273,7 +327,7 @@ const Tasks = () => {
 }
 
 // Task Card Component
-const TaskCard = ({ task, index, viewMode, onEdit, getPriorityColor, getStatusColor, getDueDateDisplay, categories, tags }) => {
+const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete, getPriorityColor, getStatusColor, getDueDateDisplay, categories, tags }) => {
   const dueDateInfo = getDueDateDisplay(task.dueDate)
   const category = categories.find(c => c.id === task.categoryId)
 
@@ -290,13 +344,16 @@ const TaskCard = ({ task, index, viewMode, onEdit, getPriorityColor, getStatusCo
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <button className={`
-            w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 hover:scale-110
-            ${task.completed 
-              ? 'bg-green-500 border-green-500 text-white' 
-              : 'border-gray-300 hover:border-primary-500'
-            }
-          `}>
+          <button 
+            onClick={() => onToggleCompletion(task)}
+            className={`
+              w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 hover:scale-110
+              ${task.completed 
+                ? 'bg-green-500 border-green-500 text-white' 
+                : 'border-gray-300 hover:border-primary-500'
+              }
+            `}
+          >
             {task.completed && <CheckSquare className="w-4 h-4" />}
           </button>
           <div className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getPriorityColor(task.priority)}`}>
@@ -311,7 +368,10 @@ const TaskCard = ({ task, index, viewMode, onEdit, getPriorityColor, getStatusCo
           >
             <Edit3 className="w-4 h-4" />
           </button>
-          <button className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200">
+          <button 
+            onClick={() => onDelete(task)}
+            className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
+          >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
@@ -371,72 +431,6 @@ const TaskCard = ({ task, index, viewMode, onEdit, getPriorityColor, getStatusCo
   )
 }
 
-// Create Task Modal Component (placeholder for now)
-const CreateTaskModal = ({ onClose, categories, tags }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent mb-6">
-          Create New Task ✨
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-8 text-center">
-          Task creation form coming soon! 🚀
-        </p>
-        <button
-          onClick={onClose}
-          className="w-full bg-gradient-to-r from-primary-500 to-accent-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
-        >
-          Close
-        </button>
-      </motion.div>
-    </motion.div>
-  )
-}
 
-// Edit Task Modal Component (placeholder for now)
-const EditTaskModal = ({ task, onClose, categories, tags }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent mb-6">
-          Edit Task: {task.title} ✏️
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-8 text-center">
-          Task editing form coming soon! 🚀
-        </p>
-        <button
-          onClick={onClose}
-          className="w-full bg-gradient-to-r from-primary-500 to-accent-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
-        >
-          Close
-        </button>
-      </motion.div>
-    </motion.div>
-  )
-}
 
 export default Tasks 
