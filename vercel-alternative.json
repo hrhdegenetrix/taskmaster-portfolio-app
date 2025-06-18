@@ -9,24 +9,24 @@
       }
     },
     {
-      "src": "api/index.js",
+      "src": "api/*.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "api/index.js"
+      "dest": "/api/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "frontend/dist/$1"
+      "dest": "/frontend/dist/$1"
     }
   ],
   "functions": {
-    "api/index.js": {
+    "api/*.js": {
       "maxDuration": 30
     }
   },
-  "installCommand": "npm install && cd frontend && npm install"
+  "buildCommand": "cd frontend && npm install && npm run build"
 } 
