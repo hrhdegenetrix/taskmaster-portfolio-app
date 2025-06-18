@@ -8,11 +8,11 @@
     "backend:dev": "cd backend && npm run dev",
     "frontend:dev": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build && npx prisma generate",
-    "vercel-build": "cd frontend && npm run build && npx prisma generate && npx prisma db push",
+    "vercel-build": "npx prisma generate && cd frontend && npm run build",
     "start": "cd backend && npm start",
     "setup": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "db:setup": "cd backend && npx prisma generate && npx prisma db push",
-    "db:studio": "cd backend && npx prisma studio"
+    "db:setup": "npx prisma generate && npx prisma db push",
+    "db:studio": "npx prisma studio"
   },
   "keywords": ["task-management", "todo", "react", "nodejs", "prisma", "postgresql"],
   "author": "Maggie",
