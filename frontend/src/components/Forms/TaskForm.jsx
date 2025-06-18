@@ -42,6 +42,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
   })
   
   const [newTag, setNewTag] = useState('')
+  const [newCategory, setNewCategory] = useState('')
   const [uploadingImage, setUploadingImage] = useState(false)
   const [errors, setErrors] = useState({})
 
@@ -91,6 +92,30 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
           selectedTags: [...prev.selectedTags, newTag.id]
         }))
         setNewTag('')
+      },
+      onError: (error) => {
+        toast.error('Failed to create tag 😕')
+        console.error('Tag creation error:', error)
+      }
+    }
+  )
+
+  // Create category mutation
+  const createCategoryMutation = useMutation(
+    (categoryData) => taskService.createCategory(categoryData),
+    {
+      onSuccess: (newCategory) => {
+        toast.success(`Category "${newCategory.name}" created! 📁`)
+        queryClient.invalidateQueries('categories')
+        setFormData(prev => ({
+          ...prev,
+          categoryId: newCategory.id
+        }))
+        setNewCategory('')
+      },
+      onError: (error) => {
+        toast.error('Failed to create category 😕')
+        console.error('Category creation error:', error)
       }
     }
   )
@@ -120,6 +145,17 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     createTagMutation.mutate({
       name: newTag.trim(),
       color: '#8b5cf6' // Default purple color
+    })
+  }
+
+  // Create new category
+  const handleCreateCategory = () => {
+    if (!newCategory.trim()) return
+    
+    createCategoryMutation.mutate({
+      name: newCategory.trim(),
+      color: '#8b5cf6', // Default purple color
+      icon: '📁' // Default folder icon
     })
   }
 
@@ -195,7 +231,6 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
@@ -323,7 +358,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
               <select
                 value={formData.categoryId}
                 onChange={(e) => handleChange('categoryId', e.target.value)}
-                className="w-full px-6 py-4 text-lg border-2 border-gray-200 dark:border-gray-600 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
+                className="w-full px-6 py-4 text-lg border-2 border-gray-200 dark:border-gray-600 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 mb-3"
               >
                 <option value="">Choose a category... 🗂️</option>
                 {categories.map(category => (
@@ -332,6 +367,26 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                   </option>
                 ))}
               </select>
+              
+              {/* Create New Category */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Create new category... 🆕"
+                  className="flex-1 px-4 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreateCategory())}
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateCategory}
+                  disabled={!newCategory.trim() || createCategoryMutation.isLoading}
+                  className="px-4 py-2 bg-gradient-to-r from-accent-500 to-fun-500 text-white rounded-xl font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                >
+                  {createCategoryMutation.isLoading ? 'Adding...' : 'Add'}
+                </button>
+              </div>
             </div>
 
             {/* Tags */}
