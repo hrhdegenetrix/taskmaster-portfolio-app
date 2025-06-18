@@ -35,7 +35,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     description: task?.description || '',
     priority: task?.priority || 'MEDIUM',
     status: task?.status || 'PENDING',
-    dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+    dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     categoryId: task?.categoryId || '',
     selectedTags: task?.tags?.map(t => t.id) || [],
     imageUrl: task?.imageUrl || ''
