@@ -1,5 +1,5 @@
 // Simple health check without database first
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -22,4 +22,4 @@ export default async function handler(req, res) {
     version: '1.0.0',
     endpoint: '/api/health'
   });
-} 
+}; 
