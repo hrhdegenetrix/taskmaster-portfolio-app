@@ -2,10 +2,5 @@
   "version": 2,
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
-  "installCommand": "npm install && cd frontend && npm install",
-  "functions": {
-    "api/*.js": {
-      "runtime": "@vercel/node@2.6.0"
-    }
-  }
+  "installCommand": "npm install && cd frontend && npm install"
 } 
