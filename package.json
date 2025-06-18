@@ -7,7 +7,8 @@
     "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
     "backend:dev": "cd backend && npm run dev",
     "frontend:dev": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build",
+    "build": "cd frontend && npm run build && npx prisma generate",
+    "vercel-build": "cd frontend && npm run build && npx prisma generate && npx prisma db push",
     "start": "cd backend && npm start",
     "setup": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "db:setup": "cd backend && npx prisma generate && npx prisma db push",
@@ -16,7 +17,11 @@
   "keywords": ["task-management", "todo", "react", "nodejs", "prisma", "postgresql"],
   "author": "Maggie",
   "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^5.7.0"
+  },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "prisma": "^5.7.0"
   }
 } 
