@@ -1,0 +1,22 @@
+{
+  "name": "taskmaster",
+  "version": "1.0.0",
+  "description": "A modern, full-stack task management application with rich features and beautiful UX",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd backend && npm run dev",
+    "frontend:dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "setup": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "db:setup": "cd backend && npx prisma generate && npx prisma db push",
+    "db:studio": "cd backend && npx prisma studio"
+  },
+  "keywords": ["task-management", "todo", "react", "nodejs", "prisma", "postgresql"],
+  "author": "Maggie",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 
