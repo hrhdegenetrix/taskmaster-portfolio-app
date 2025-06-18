@@ -35,7 +35,15 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     description: task?.description || '',
     priority: task?.priority || 'MEDIUM',
     status: task?.status || 'PENDING',
-    dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+    dueTime: task?.dueDate ? (() => {
+      const date = new Date(task.dueDate);
+      // Check if it's set to end of day (23:59:59) - if so, no specific time was set
+      if (date.getHours() === 23 && date.getMinutes() === 59 && date.getSeconds() === 59) {
+        return '';
+      }
+      return date.toTimeString().split(' ')[0].substring(0, 5);
+    })() : '',
     categoryId: task?.categoryId || '',
     selectedTags: task?.tags?.map(t => t.id) || [],
     imageUrl: task?.imageUrl || ''
@@ -211,12 +219,24 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       return
     }
 
+    // Combine date and time if both are provided
+    let combinedDateTime = null;
+    if (formData.dueDate) {
+      combinedDateTime = formData.dueDate;
+      if (formData.dueTime) {
+        combinedDateTime += `T${formData.dueTime}:00`;
+      } else {
+        // If no time specified, set to end of day (will be handled by backend)
+        combinedDateTime += `T00:00:00`;
+      }
+    }
+
     const taskData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
       priority: formData.priority,
       status: formData.status,
-      dueDate: formData.dueDate || null,
+      dueDate: combinedDateTime,
       categoryId: formData.categoryId || null,
       tags: formData.selectedTags,
       imageUrl: formData.imageUrl || null
@@ -314,7 +334,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
             </div>
           </div>
 
-          {/* Status & Due Date Row */}
+          {/* Status & Due Date/Time Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Status */}
             <div>
@@ -334,17 +354,29 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
               </select>
             </div>
 
-            {/* Due Date */}
+            {/* Due Date & Time */}
             <div>
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
-                Due Date 📅
+                Due Date & Time 📅⏰
               </label>
-              <input
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => handleChange('dueDate', e.target.value)}
-                className="w-full px-6 py-4 text-lg border-2 border-gray-200 dark:border-gray-600 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
-              />
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={(e) => handleChange('dueDate', e.target.value)}
+                  className="px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
+                />
+                <input
+                  type="time"
+                  value={formData.dueTime}
+                  onChange={(e) => handleChange('dueTime', e.target.value)}
+                  className="px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
+                  disabled={!formData.dueDate}
+                />
+              </div>
+              <p className="text-gray-500 text-xs mt-2">
+                💡 Time is optional - without it, tasks are due at end of day
+              </p>
             </div>
           </div>
 

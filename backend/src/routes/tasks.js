@@ -144,6 +144,17 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Task title is required' });
     }
 
+    // Process due date - set to end of day if no time specified
+    let processedDueDate = null;
+    if (dueDate) {
+      const date = new Date(dueDate);
+      // If no time is specified, set to end of day (23:59:59)
+      if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0) {
+        date.setHours(23, 59, 59, 999);
+      }
+      processedDueDate = date;
+    }
+
     // Create the task
     const task = await prisma.task.create({
       data: {
@@ -151,7 +162,7 @@ router.post('/', async (req, res) => {
         description: description?.trim(),
         status: status.toUpperCase(),
         priority: priority.toUpperCase(),
-        dueDate: dueDate ? new Date(dueDate) : null,
+        dueDate: processedDueDate,
         categoryId,
         imageUrl,
         position: parseInt(position)
@@ -236,7 +247,18 @@ router.put('/:id', async (req, res) => {
     if (description !== undefined) updateData.description = description?.trim();
     if (status !== undefined) updateData.status = status.toUpperCase();
     if (priority !== undefined) updateData.priority = priority.toUpperCase();
-    if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
+    if (dueDate !== undefined) {
+      if (dueDate) {
+        const date = new Date(dueDate);
+        // If no time is specified, set to end of day (23:59:59)
+        if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0) {
+          date.setHours(23, 59, 59, 999);
+        }
+        updateData.dueDate = date;
+      } else {
+        updateData.dueDate = null;
+      }
+    }
     if (completed !== undefined) {
       updateData.completed = completed;
       if (completed && !existingTask.completed) {
