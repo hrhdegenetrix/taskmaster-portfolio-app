@@ -1,29 +1,19 @@
 {
   "name": "taskmaster",
   "version": "1.0.0",
-  "description": "A modern, full-stack task management application with rich features and beautiful UX",
-  "main": "index.js",
+  "description": "A modern, full-stack task management application",
   "scripts": {
-    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
-    "backend:dev": "cd backend && npm run dev",
-    "frontend:dev": "cd frontend && npm run dev",
-    "build": "npx prisma generate && cd frontend && npm run build",
-    "vercel-build": "npx prisma generate && cd frontend && npm run build",
-    "start": "cd backend && npm start",
-    "setup": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "db:setup": "npx prisma generate && npx prisma db push",
-    "db:studio": "npx prisma studio"
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "setup": "npm install && cd frontend && npm install"
   },
-  "keywords": ["task-management", "todo", "react", "nodejs", "prisma", "postgresql"],
+  "keywords": ["task-management", "react", "serverless", "vercel"],
   "author": "Maggie",
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^5.7.0",
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "@prisma/client": "^5.7.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
     "prisma": "^5.7.0"
   }
 } 
