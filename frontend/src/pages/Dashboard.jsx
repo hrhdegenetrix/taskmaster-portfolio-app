@@ -93,19 +93,19 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Dashboard
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-600 via-accent-600 to-fun-600 bg-clip-text text-transparent">
+            Dashboard ✨
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Welcome back! Here's what's happening with your tasks.
+          <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">
+            Welcome back! Let's get stuff done today! 🎯
           </p>
         </div>
         <Link
           to="/tasks"
-          className="btn btn-primary btn-md"
+          className="bg-gradient-to-r from-primary-500 via-accent-500 to-fun-500 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 animate-bounce-soft"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          New Task
+          <Plus className="w-5 h-5 mr-2 inline" />
+          Create New Task ✨
         </Link>
       </div>
 

@@ -28,33 +28,38 @@ const Layout = ({ children }) => {
       path: '/',
       icon: LayoutDashboard,
       label: 'Dashboard',
-      description: 'Overview and quick actions'
+      description: 'Overview and quick actions 📊',
+      emoji: '🏠'
     },
     {
       path: '/tasks',
       icon: CheckSquare,
       label: 'Tasks',
-      description: 'Manage your tasks',
-      count: tasks?.length || 0
+      description: 'Manage your awesome tasks 💪',
+      count: tasks?.length || 0,
+      emoji: '✅'
     },
     {
       path: '/categories',
       icon: FolderOpen,
       label: 'Categories',
-      description: 'Organize by category',
-      count: categories?.length || 0
+      description: 'Organize by category 🗂️',
+      count: categories?.length || 0,
+      emoji: '📁'
     },
     {
       path: '/analytics',
       icon: BarChart3,
       label: 'Analytics',
-      description: 'Productivity insights'
+      description: 'Productivity insights 📈',
+      emoji: '📊'
     },
     {
       path: '/settings',
       icon: Settings,
       label: 'Settings',
-      description: 'App preferences'
+      description: 'Customize your experience ⚙️',
+      emoji: '⚙️'
     }
   ]
 
@@ -85,15 +90,15 @@ const Layout = ({ children }) => {
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-              <CheckSquare className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-400 via-accent-500 to-fun-500 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-all duration-300 animate-float">
+              <CheckSquare className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-                TaskMaster
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 via-accent-600 to-fun-600 bg-clip-text text-transparent">
+                TaskMaster ✨
               </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Stay organized
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                Get stuff done! 🚀
               </p>
             </div>
           </div>
@@ -116,32 +121,32 @@ const Layout = ({ children }) => {
                 to={item.path}
                 onClick={() => setIsSidebarOpen(false)}
                 className={`
-                  group flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200
+                  group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105
                   ${isActive
-                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                    : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
+                    ? 'bg-gradient-to-r from-primary-50 to-accent-50 text-primary-700 dark:from-primary-900/30 dark:to-accent-900/30 dark:text-primary-300 shadow-lg border-l-4 border-primary-500'
+                    : 'text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-primary-25 dark:text-gray-300 dark:hover:from-gray-700 dark:hover:to-primary-900/20 hover:shadow-md'
                   }
                 `}
               >
-                <Icon className={`w-5 h-5 mr-3 transition-colors ${
-                  isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'
-                }`} />
+                <div className="flex items-center justify-center w-8 h-8 mr-3">
+                  <span className="text-lg">{item.emoji}</span>
+                </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span>{item.label}</span>
+                    <span className="font-semibold">{item.label}</span>
                     {item.count !== undefined && (
                       <span className={`
-                        px-2 py-0.5 text-xs rounded-full
+                        px-2.5 py-1 text-xs rounded-full font-bold animate-bounce-soft
                         ${isActive
-                          ? 'bg-primary-100 text-primary-700 dark:bg-primary-800 dark:text-primary-300'
-                          : 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300'
+                          ? 'bg-gradient-to-r from-primary-200 to-accent-200 text-primary-800 dark:from-primary-700 dark:to-accent-700 dark:text-primary-200'
+                          : 'bg-gradient-to-r from-gray-200 to-primary-200 text-gray-700 dark:from-gray-600 dark:to-primary-600 dark:text-gray-200'
                         }
                       `}>
                         {item.count}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
                     {item.description}
                   </p>
                 </div>
