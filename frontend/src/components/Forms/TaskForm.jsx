@@ -568,15 +568,40 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       }
     }
 
+    // Prepare task data
     const taskData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
       priority: formData.priority,
       status: formData.status,
-      dueDate: combinedDateTime,
       categoryId: formData.categoryId || null,
       tags: formData.selectedTags,
       imageUrl: formData.imageUrl || null
+    }
+
+    // Only include dueDate if it's actually different from the original task
+    // This prevents unintentional time changes when just updating status/other fields
+    if (isEditing && task?.dueDate) {
+      // Compare the combined datetime with the original task's dueDate
+      const originalDate = new Date(task.dueDate)
+      const newDate = combinedDateTime ? new Date(combinedDateTime) : null
+      
+      // Only include dueDate if it's actually different or if the user intended to change it
+      const originalDateStr = originalDate.toISOString().split('T')[0]
+      const originalTimeStr = originalDate.toTimeString().split(' ')[0].substring(0, 5)
+      const hasOriginalTime = !(originalDate.getHours() === 23 && originalDate.getMinutes() === 59 && originalDate.getSeconds() === 59)
+      
+      // Check if the date or time has actually changed
+      const dateChanged = formData.dueDate !== originalDateStr
+      const timeChanged = formData.dueTime !== (hasOriginalTime ? originalTimeStr : '')
+      
+      if (dateChanged || timeChanged) {
+        taskData.dueDate = combinedDateTime
+      }
+      // If neither changed, don't include dueDate in the update to preserve original time
+    } else {
+      // For new tasks or tasks without existing due dates, always include the dueDate
+      taskData.dueDate = combinedDateTime
     }
 
     createTaskMutation.mutate(taskData)
