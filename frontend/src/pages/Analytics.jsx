@@ -45,7 +45,16 @@ import toast from 'react-hot-toast'
 const Analytics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month')
   const [showAchievements, setShowAchievements] = useState(true)
-  const [previouslyUnlocked, setPreviouslyUnlocked] = useState(new Set())
+  
+  // Initialize previouslyUnlocked from localStorage
+  const [previouslyUnlocked, setPreviouslyUnlocked] = useState(() => {
+    try {
+      const saved = localStorage.getItem('taskmaster-unlocked-achievements')
+      return saved ? new Set(JSON.parse(saved)) : new Set()
+    } catch {
+      return new Set()
+    }
+  })
   
   // Get the correct lifetime counts from TaskContext (localStorage)
   const { lifetimeCompleted = 0, lifetimeTotal = 0, allTasks = [] } = useTask()
@@ -211,35 +220,51 @@ const Analytics = () => {
   React.useEffect(() => {
     const currentlyUnlocked = new Set(achievements.filter(a => a.unlocked).map(a => a.id))
     
-    // Find newly unlocked achievements
+    // Find newly unlocked achievements (only show notifications for truly new ones)
     const newlyUnlocked = achievements.filter(a => 
       a.unlocked && !previouslyUnlocked.has(a.id)
     )
     
-    // Show notifications for new achievements
-    newlyUnlocked.forEach(achievement => {
-      toast.success(
-        `🏆 Achievement Unlocked!\n${achievement.title}`,
-        {
-          duration: 5000,
-          style: {
-            background: 'linear-gradient(to right, #8B5CF6, #EC4899)',
-            color: 'white',
-            fontWeight: 'bold',
-            borderRadius: '16px',
-            padding: '16px',
-          },
-          iconTheme: {
-            primary: '#FFD700',
-            secondary: '#FFFFFF',
-          },
-        }
-      )
-    })
-    
-    // Update previously unlocked set
-    if (newlyUnlocked.length > 0 || previouslyUnlocked.size === 0) {
+    // Only show notifications if there are genuinely new achievements
+    if (newlyUnlocked.length > 0) {
+      newlyUnlocked.forEach(achievement => {
+        toast.success(
+          `🏆 Achievement Unlocked!\n${achievement.title}`,
+          {
+            duration: 5000,
+            style: {
+              background: 'linear-gradient(to right, #8B5CF6, #EC4899)',
+              color: 'white',
+              fontWeight: 'bold',
+              borderRadius: '16px',
+              padding: '16px',
+            },
+            iconTheme: {
+              primary: '#FFD700',
+              secondary: '#FFFFFF',
+            },
+          }
+        )
+      })
+      
+      // Update and persist the unlocked achievements
+      const newUnlockedSet = new Set(currentlyUnlocked)
+      setPreviouslyUnlocked(newUnlockedSet)
+      
+      // Save to localStorage for persistence
+      try {
+        localStorage.setItem('taskmaster-unlocked-achievements', JSON.stringify([...newUnlockedSet]))
+      } catch (error) {
+        console.warn('Could not save unlocked achievements to localStorage:', error)
+      }
+    } else if (previouslyUnlocked.size === 0 && currentlyUnlocked.size > 0) {
+      // First time loading - just save current unlocked achievements without showing notifications
       setPreviouslyUnlocked(currentlyUnlocked)
+      try {
+        localStorage.setItem('taskmaster-unlocked-achievements', JSON.stringify([...currentlyUnlocked]))
+      } catch (error) {
+        console.warn('Could not save unlocked achievements to localStorage:', error)
+      }
     }
   }, [achievements, previouslyUnlocked])
 
@@ -329,9 +354,17 @@ const Analytics = () => {
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-bold truncate">{achievement.title}</h3>
           <p className="text-xs opacity-90 truncate">{achievement.description}</p>
-          <div className="mt-2 bg-black bg-opacity-20 rounded-full h-2">
+          <div className={`mt-2 rounded-full h-2 ${
+            achievement.unlocked 
+              ? 'bg-black bg-opacity-20' 
+              : 'bg-gray-200 dark:bg-gray-600'
+          }`}>
             <div 
-              className="bg-white bg-opacity-80 h-2 rounded-full transition-all duration-500"
+              className={`h-2 rounded-full transition-all duration-500 ${
+                achievement.unlocked 
+                  ? 'bg-white bg-opacity-80' 
+                  : 'bg-gradient-to-r from-yellow-400 to-yellow-500'
+              }`}
               style={{ width: `${(achievement.progress / achievement.max) * 100}%` }}
             />
           </div>
