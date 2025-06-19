@@ -354,26 +354,29 @@ const Tasks = () => {
               </span>
             </label>
             
-            {/* Delete All Completed Button */}
+            {/* Completed Tasks Status/Action */}
             {allTasks.filter(t => t.completed).length > 0 && (
-              <button
-                onClick={handleDeleteAllCompleted}
-                disabled={deleteAllCompletedMutation.isLoading}
-                className={`px-3 py-1 text-xs rounded-full font-medium transition-all duration-200 transform hover:scale-105 ${
-                  showCompleted 
-                    ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                    : 'bg-green-100 text-green-700 hover:bg-green-200'
-                } ${deleteAllCompletedMutation.isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                title={showCompleted ? 'Delete all completed tasks' : `${allTasks.filter(t => t.completed).length} completed tasks hidden`}
-              >
-                {deleteAllCompletedMutation.isLoading ? (
-                  'Deleting...'
-                ) : showCompleted ? (
-                  `Delete all ${allTasks.filter(t => t.completed).length} 🗑️`
-                ) : (
-                  `${allTasks.filter(t => t.completed).length} hidden`
-                )}
-              </button>
+              showCompleted ? (
+                <button
+                  onClick={handleDeleteAllCompleted}
+                  disabled={deleteAllCompletedMutation.isLoading}
+                  className={`px-3 py-1 text-xs rounded-full font-medium transition-all duration-200 transform hover:scale-105 bg-red-100 text-red-700 hover:bg-red-200 ${deleteAllCompletedMutation.isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  title="Delete all completed tasks"
+                >
+                  {deleteAllCompletedMutation.isLoading ? (
+                    'Deleting...'
+                  ) : (
+                    `Delete all ${allTasks.filter(t => t.completed).length} 🗑️`
+                  )}
+                </button>
+              ) : (
+                <span
+                  className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full font-medium"
+                  title={`${allTasks.filter(t => t.completed).length} completed tasks are hidden`}
+                >
+                  {allTasks.filter(t => t.completed).length} hidden
+                </span>
+              )
             )}
           </div>
 
