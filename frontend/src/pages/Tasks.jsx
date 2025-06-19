@@ -13,7 +13,6 @@ import {
   Clock,
   Edit3,
   Trash2,
-  Image as ImageIcon,
   Star,
   MoreHorizontal
 } from 'lucide-react'
@@ -426,7 +425,7 @@ const Tasks = () => {
       {/* Tasks List/Grid */}
       <div className={`${
         viewMode === 'grid' 
-          ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+          ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start'
           : 'space-y-4'
       }`}>
         <AnimatePresence>
@@ -600,16 +599,6 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
         <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
           {task.description}
         </p>
-      )}
-
-      {task.imageUrl && (
-        <div className="mb-4">
-          <img
-            src={task.imageUrl}
-            alt="Task attachment"
-            className="w-full h-32 object-cover rounded-lg"
-          />
-        </div>
       )}
 
       <div className="flex items-center justify-between min-h-[28px]">

@@ -7,8 +7,6 @@ import {
   FolderOpen,
   AlertCircle,
   Clock,
-  Image as ImageIcon,
-  Upload,
   Trash2,
   Star,
   Zap,
@@ -18,7 +16,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { useTask } from '../../contexts/TaskContext'
-import { taskService, uploadService } from '../../services/api'
+import { taskService } from '../../services/api'
 import { useMutation, useQueryClient } from 'react-query'
 import toast from 'react-hot-toast'
 
@@ -232,7 +230,6 @@ const TimeDropdown = ({ value, onChange, disabled }) => {
 const TaskForm = ({ task = null, onClose, categories, tags }) => {
   const { invalidateQueries, incrementLifetimeTotal } = useTask()
   const queryClient = useQueryClient()
-  const fileInputRef = useRef(null)
   
   const isEditing = !!task
   
@@ -252,13 +249,11 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       return date.toTimeString().split(' ')[0].substring(0, 5);
     })() : '',
     categoryId: task?.categoryId || '',
-    selectedTags: task?.tags?.map(t => t.id) || [],
-    imageUrl: task?.imageUrl || ''
+    selectedTags: task?.tags?.map(t => t.id) || []
   })
   
   const [newTag, setNewTag] = useState('')
   const [newCategory, setNewCategory] = useState('')
-  const [uploadingImage, setUploadingImage] = useState(false)
   const [errors, setErrors] = useState({})
   
   // Confirmation modal state
@@ -509,33 +504,6 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     })
   }
 
-  // Handle image upload
-  const handleImageUpload = async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image too large! Max 5MB please 📏')
-      return
-    }
-
-    setUploadingImage(true)
-    try {
-      const result = await uploadService.uploadImage(file)
-      setFormData(prev => ({ ...prev, imageUrl: result.file.url }))
-      toast.success('Image uploaded! 📸')
-    } catch (error) {
-      toast.error('Image upload failed 😕')
-    } finally {
-      setUploadingImage(false)
-    }
-  }
-
-  // Remove image
-  const removeImage = () => {
-    setFormData(prev => ({ ...prev, imageUrl: '' }))
-  }
-
   // Validate form
   const validateForm = () => {
     const newErrors = {}
@@ -580,8 +548,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       priority: formData.priority,
       status: formData.status,
       categoryId: formData.categoryId || null,
-      tags: formData.selectedTags,
-      imageUrl: formData.imageUrl || null
+      tags: formData.selectedTags
     }
 
     // Only include dueDate if it's actually different from the original task
@@ -885,58 +852,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
             </p>
           </div>
 
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
-              Attach Image 📸
-            </label>
-            
-            {formData.imageUrl ? (
-              <div className="relative">
-                <img
-                  src={formData.imageUrl}
-                  alt="Task attachment"
-                  className="w-full h-48 object-cover rounded-2xl"
-                />
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 transform hover:scale-110"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-8 text-center cursor-pointer hover:border-primary-500 hover:bg-primary-25 dark:hover:bg-gray-700 transition-all duration-200 transform hover:scale-105"
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                {uploadingImage ? (
-                  <div className="flex flex-col items-center">
-                    <div className="loading-spinner w-8 h-8 mb-4"></div>
-                    <p className="text-gray-600 dark:text-gray-400">Uploading image... ⚡</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center">
-                    <ImageIcon className="w-12 h-12 text-gray-400 mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400 font-medium">
-                      Click to upload an image ✨
-                    </p>
-                    <p className="text-gray-500 text-sm mt-1">
-                      PNG, JPG, GIF up to 5MB
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+
 
           {/* Submit Buttons */}
           <div className="flex flex-col-reverse sm:flex-row gap-4 pt-6">
@@ -950,7 +866,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
             </button>
             <button
               type="submit"
-              disabled={createTaskMutation.isLoading || uploadingImage}
+              disabled={createTaskMutation.isLoading}
               className="flex-1 px-6 py-4 text-lg font-bold text-white bg-gradient-to-r from-primary-500 via-accent-500 to-fun-500 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {createTaskMutation.isLoading ? (
