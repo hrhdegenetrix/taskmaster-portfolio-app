@@ -42,6 +42,7 @@ const Tasks = () => {
     showCompleted,
     toggleShowCompleted,
     incrementLifetimeCompleted,
+    lifetimeCompleted,
     isLoading,
     invalidateQueries
   } = useTask()
@@ -384,7 +385,7 @@ const Tasks = () => {
 
           <div className="text-sm text-gray-600 dark:text-gray-400">
             <span className="font-medium">{showCompleted ? allTasks.length : tasks.length}</span> tasks shown •{' '}
-            <span className="font-medium text-green-600">{allTasks.filter(t => t.completed).length}</span> completed 🎉
+            <span className="font-medium text-green-600">{lifetimeCompleted}</span> completed 🎉
           </div>
         </div>
       </div>

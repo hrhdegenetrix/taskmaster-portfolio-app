@@ -48,7 +48,7 @@ const Layout = ({ children }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStartX, setDragStartX] = useState(0)
   const { isDark, toggleTheme } = useTheme()
-  const { tasks, categories } = useTask()
+  const { tasks, categories, lifetimeCompleted } = useTask()
   const location = useLocation()
 
   // Navigation items
@@ -340,7 +340,7 @@ const Layout = ({ children }) => {
               <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                 <span>{tasks?.length || 0} total tasks</span>
                 <span>•</span>
-                <span>{tasks?.filter(t => t.completed)?.length || 0} completed</span>
+                <span>{lifetimeCompleted || 0} completed</span>
               </div>
               
               <button
