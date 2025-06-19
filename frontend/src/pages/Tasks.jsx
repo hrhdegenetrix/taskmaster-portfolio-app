@@ -587,7 +587,7 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
       </div>
 
       <h3 className={`
-        text-lg font-bold mb-2 transition-all duration-200 line-clamp-2
+        text-lg font-bold mb-3 transition-all duration-200 min-h-[3rem] flex items-start
         ${task.completed 
           ? 'text-gray-500 line-through' 
           : 'text-gray-900 dark:text-white'
@@ -596,13 +596,13 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
         {task.title}
       </h3>
 
-      <div className="flex-1 mb-4">
+      <div className="flex-1 mb-3">
         {task.description ? (
-          <p className="text-gray-600 dark:text-gray-400 line-clamp-3">
+          <p className="text-gray-600 dark:text-gray-400 line-clamp-2 text-sm">
             {task.description}
           </p>
         ) : (
-          <div className="h-12"></div>
+          <div className="h-8"></div>
         )}
       </div>
 

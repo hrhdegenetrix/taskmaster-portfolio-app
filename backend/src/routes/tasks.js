@@ -244,8 +244,8 @@ router.put('/:id', async (req, res) => {
     // Check if task is overdue and prevent status changes (except to COMPLETED)
     if (status !== undefined && existingTask.dueDate && !existingTask.completed) {
       const now = new Date();
-      const dueDate = new Date(existingTask.dueDate);
-      const isOverdue = dueDate < now;
+      const existingDueDate = new Date(existingTask.dueDate);
+      const isOverdue = existingDueDate < now;
       
       if (isOverdue && status.toUpperCase() !== 'COMPLETED') {
         return res.status(400).json({ 
