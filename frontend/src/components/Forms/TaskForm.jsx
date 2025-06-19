@@ -230,7 +230,7 @@ const TimeDropdown = ({ value, onChange, disabled }) => {
 }
 
 const TaskForm = ({ task = null, onClose, categories, tags }) => {
-  const { invalidateQueries, incrementLifetimeTotal } = useTask()
+  const { invalidateQueries } = useTask()
   const queryClient = useQueryClient()
   const fileInputRef = useRef(null)
   
@@ -294,12 +294,6 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     {
       onSuccess: () => {
         toast.success(isEditing ? 'Task updated! 🎉' : 'Task created! ✨')
-        
-        // Increment lifetime total only when creating new tasks (not editing)
-        if (!isEditing) {
-          incrementLifetimeTotal()
-        }
-        
         invalidateQueries()
         onClose()
       },
