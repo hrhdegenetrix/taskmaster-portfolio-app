@@ -67,6 +67,19 @@ const taskReducer = (state, action) => {
         ...state,
         lifetimeCompleted: action.payload
       }
+    case 'INCREMENT_LIFETIME_TOTAL':
+      const newLifetimeTotal = state.lifetimeTotal + 1
+      // Save to localStorage
+      localStorage.setItem('taskmaster-lifetime-total', newLifetimeTotal.toString())
+      return {
+        ...state,
+        lifetimeTotal: newLifetimeTotal
+      }
+    case 'LOAD_LIFETIME_TOTAL':
+      return {
+        ...state,
+        lifetimeTotal: action.payload
+      }
     default:
       return state
   }
@@ -88,7 +101,8 @@ const initialState = {
   viewMode: 'list', // 'list' | 'grid' | 'kanban'
   selectedTasks: [],
   showCompleted: false, // Hide completed tasks by default
-  lifetimeCompleted: 0 // Track lifetime completed tasks
+  lifetimeCompleted: 0, // Track lifetime completed tasks
+  lifetimeTotal: 0 // Track lifetime total tasks
 }
 
 export const TaskProvider = ({ children }) => {
@@ -165,6 +179,10 @@ export const TaskProvider = ({ children }) => {
     dispatch({ type: 'INCREMENT_LIFETIME_COMPLETED' })
   }
 
+  const incrementLifetimeTotal = () => {
+    dispatch({ type: 'INCREMENT_LIFETIME_TOTAL' })
+  }
+
   // Utility functions
   const invalidateQueries = () => {
     queryClient.invalidateQueries('tasks')
@@ -185,7 +203,7 @@ export const TaskProvider = ({ children }) => {
     return tags?.find(tag => tag.id === tagId)
   }
 
-  // Load view mode and lifetime completed count from localStorage on mount
+  // Load view mode and lifetime counts from localStorage on mount
   useEffect(() => {
     const savedViewMode = localStorage.getItem('taskmaster-view-mode')
     if (savedViewMode && ['list', 'grid', 'kanban'].includes(savedViewMode)) {
@@ -199,7 +217,27 @@ export const TaskProvider = ({ children }) => {
         dispatch({ type: 'LOAD_LIFETIME_COMPLETED', payload: count })
       }
     }
+
+    const savedLifetimeTotal = localStorage.getItem('taskmaster-lifetime-total')
+    if (savedLifetimeTotal) {
+      const count = parseInt(savedLifetimeTotal, 10)
+      if (!isNaN(count)) {
+        dispatch({ type: 'LOAD_LIFETIME_TOTAL', payload: count })
+      }
+    }
   }, [])
+
+  // Initialize lifetimeTotal from current task count if not set (for existing users)
+  useEffect(() => {
+    if (tasksData?.tasks && state.lifetimeTotal === 0) {
+      const currentTaskCount = tasksData.tasks.length
+      if (currentTaskCount > 0) {
+        // Only initialize if there are tasks but no lifetime total recorded
+        dispatch({ type: 'LOAD_LIFETIME_TOTAL', payload: currentTaskCount })
+        localStorage.setItem('taskmaster-lifetime-total', currentTaskCount.toString())
+      }
+    }
+  }, [tasksData?.tasks, state.lifetimeTotal])
 
   // Filter tasks based on showCompleted toggle
   const filteredTasks = (tasksData?.tasks || []).filter(task => {
@@ -217,6 +255,7 @@ export const TaskProvider = ({ children }) => {
     selectedTasks: state.selectedTasks,
     showCompleted: state.showCompleted,
     lifetimeCompleted: state.lifetimeCompleted,
+    lifetimeTotal: state.lifetimeTotal,
 
     // Data
     tasks: filteredTasks,
@@ -243,6 +282,7 @@ export const TaskProvider = ({ children }) => {
     clearSelection,
     toggleShowCompleted,
     incrementLifetimeCompleted,
+    incrementLifetimeTotal,
     invalidateQueries,
 
     // Utility functions

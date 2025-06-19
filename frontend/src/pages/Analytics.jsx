@@ -47,8 +47,8 @@ const Analytics = () => {
   const [showAchievements, setShowAchievements] = useState(true)
   const [previouslyUnlocked, setPreviouslyUnlocked] = useState(new Set())
   
-  // Get the correct lifetime completed count from TaskContext (localStorage)
-  const { lifetimeCompleted = 0, allTasks = [] } = useTask()
+  // Get the correct lifetime counts from TaskContext (localStorage)
+  const { lifetimeCompleted = 0, lifetimeTotal = 0, allTasks = [] } = useTask()
   const queryClient = useQueryClient()
 
   // Fetch analytics data using consolidated endpoint
@@ -91,10 +91,10 @@ const Analytics = () => {
     if (!lifetimeCompleted && lifetimeCompleted !== 0) return [] // Wait for localStorage to load
     
     // Use ONLY localStorage values - never override them!
-    const lifetimeTotalTasks = allTasks?.length || 0 // Current tasks in database
+    const lifetimeTotalTasks = lifetimeTotal // TRUE lifetime count from localStorage (includes deleted)
     const lifetimeCompletedTasks = lifetimeCompleted // TRUE lifetime count from localStorage (includes deleted)
-    const lifetimeCompletionRate = lifetimeCompletedTasks > 0 && lifetimeTotalTasks > 0 
-      ? (lifetimeCompletedTasks / Math.max(lifetimeCompletedTasks, lifetimeTotalTasks)) * 100 
+    const lifetimeCompletionRate = lifetimeTotalTasks > 0 
+      ? (lifetimeCompletedTasks / lifetimeTotalTasks) * 100 
       : 0
     const currentStreak = productivity?.streaks?.current || 0
     const longestStreak = productivity?.streaks?.longest || 0
@@ -345,10 +345,10 @@ const Analytics = () => {
     }
   }, [achievements, previouslyUnlocked])
 
-  // Invalidate analytics cache when tasks change
+  // Invalidate analytics cache when tasks or lifetime counts change
   React.useEffect(() => {
-    // This will trigger a refetch of analytics data when tasks change
-    if (allTasks.length > 0) {
+    // This will trigger a refetch of analytics data when tasks or lifetime data changes
+    if (allTasks.length > 0 || lifetimeCompleted > 0 || lifetimeTotal > 0) {
       // Small delay to ensure the analytics reflect the latest changes
       const timer = setTimeout(() => {
         // Properly invalidate React Query caches
@@ -360,7 +360,7 @@ const Analytics = () => {
       
       return () => clearTimeout(timer)
     }
-  }, [allTasks.length, queryClient])
+  }, [allTasks.length, lifetimeCompleted, lifetimeTotal, queryClient])
 
   return (
     <div className="space-y-8">
@@ -395,11 +395,11 @@ const Analytics = () => {
       {overview?.overview && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
-            title="Total Tasks"
-            value={allTasks?.length || 0}
+            title="Total Tasks (Lifetime)"
+            value={lifetimeTotal}
             icon={CheckCircle}
             color="from-blue-500 to-blue-600"
-            subtitle={`${overview?.overview?.totalTasks || 0} this ${selectedPeriod}`}
+            subtitle="Including deleted tasks 📝"
           />
           <StatCard
             title="Completed (Lifetime)"
