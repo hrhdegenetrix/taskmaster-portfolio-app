@@ -45,40 +45,10 @@ module.exports = async (req, res) => {
           ];
         }
 
-        // Build order by clause
-        const orderBy = [];
-        
-        // Always put completed tasks at the end, but allow sorting within groups
-        // false (uncompleted) comes before true (completed) with 'asc'
-        // Note: In Prisma/PostgreSQL, false < true, so 'asc' puts false first
-        orderBy.push({ completed: 'asc' });
-        
-        // Add the requested sort
-        if (sortBy === 'priority') {
-          orderBy.push({ 
-            priority: sortOrder === 'asc' ? 'asc' : 'desc'
-          });
-        } else if (sortBy === 'dueDate') {
-          // For dueDate, put null values last when ascending, first when descending
-          orderBy.push({ 
-            dueDate: { 
-              sort: sortOrder === 'asc' ? 'asc' : 'desc',
-              nulls: sortOrder === 'asc' ? 'last' : 'first'
-            }
-          });
-        } else if (sortBy === 'position') {
-          orderBy.push({ position: sortOrder === 'asc' ? 'asc' : 'desc' });
-        } else {
-          // Default to createdAt
-          orderBy.push({ createdAt: sortOrder === 'asc' ? 'asc' : 'desc' });
-        }
-
-        const [tasks, total] = await Promise.all([
+        // Fetch all tasks first, then sort in JavaScript to handle completed task logic properly
+        const [allTasks, total] = await Promise.all([
           prisma.task.findMany({
             where,
-            skip,
-            take: limitNum,
-            orderBy,
             include: {
               category: true,
               tags: {
@@ -93,7 +63,7 @@ module.exports = async (req, res) => {
 
         // Transform tasks to include tags properly and mark overdue
         const now = new Date();
-        const transformedTasks = tasks.map(task => {
+        const transformedTasks = allTasks.map(task => {
           let finalTask = {
             ...task,
             tags: task.tags.map(taskTag => taskTag.tag)
@@ -111,17 +81,60 @@ module.exports = async (req, res) => {
           return finalTask;
         });
 
+        // Custom sorting: completed tasks always go last, ignoring their due dates
+        const sortedTasks = transformedTasks.sort((a, b) => {
+          // First, sort by completion status - incomplete tasks first
+          if (a.completed !== b.completed) {
+            return a.completed ? 1 : -1; // false (incomplete) comes before true (completed)
+          }
+
+          // Within the same completion status, sort by the requested criteria
+          if (sortBy === 'priority') {
+            const priorities = { 'LOW': 1, 'MEDIUM': 2, 'HIGH': 3, 'OVERDUE': 4 };
+            const aPriority = priorities[a.priority] || 0;
+            const bPriority = priorities[b.priority] || 0;
+            return sortOrder === 'asc' ? aPriority - bPriority : bPriority - aPriority;
+          } else if (sortBy === 'dueDate') {
+            // For completed tasks, ignore due date and sort by updatedAt instead
+            if (a.completed && b.completed) {
+              const aDate = new Date(a.updatedAt);
+              const bDate = new Date(b.updatedAt);
+              return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
+            }
+            // For incomplete tasks, sort by due date normally
+            const aDate = a.dueDate ? new Date(a.dueDate) : null;
+            const bDate = b.dueDate ? new Date(b.dueDate) : null;
+            
+            if (!aDate && !bDate) return 0;
+            if (!aDate) return sortOrder === 'asc' ? 1 : -1; // null dates go last when asc
+            if (!bDate) return sortOrder === 'asc' ? -1 : 1;
+            
+            return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
+          } else if (sortBy === 'position') {
+            return sortOrder === 'asc' ? a.position - b.position : b.position - a.position;
+          } else {
+            // Default to createdAt
+            const aDate = new Date(a.createdAt);
+            const bDate = new Date(b.createdAt);
+            return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
+          }
+        });
+
+        // Apply pagination after sorting
+        const paginatedTasks = sortedTasks.slice(skip, skip + limitNum);
+
         // Debug logging
-        console.log('First 5 tasks with completion status:', 
-          transformedTasks.slice(0, 5).map(t => ({
+        console.log('First 5 tasks with completion status (after sorting):', 
+          paginatedTasks.slice(0, 5).map(t => ({
             title: t.title,
             completed: t.completed,
-            priority: t.priority
+            priority: t.priority,
+            dueDate: t.dueDate
           }))
         )
 
         res.status(200).json({
-          tasks: transformedTasks,
+          tasks: paginatedTasks,
           pagination: {
             page: pageNum,
             limit: limitNum,

@@ -45,6 +45,8 @@ const GlobalSearchInput = () => {
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStartX, setDragStartX] = useState(0)
   const { isDark, toggleTheme } = useTheme()
   const { tasks, categories } = useTask()
   const location = useLocation()
@@ -94,6 +96,67 @@ const Layout = ({ children }) => {
     setIsSidebarOpen(!isSidebarOpen)
   }
 
+  // Drag handlers for pull-out tab
+  const handleDragStart = (e) => {
+    e.preventDefault()
+    setIsDragging(true)
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    setDragStartX(clientX)
+  }
+
+  const handleDragMove = (e) => {
+    if (!isDragging) return
+    
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    const dragDistance = clientX - dragStartX
+    
+    // If dragged right more than 50px, open sidebar
+    if (dragDistance > 50 && !isSidebarOpen) {
+      setIsSidebarOpen(true)
+      setIsDragging(false)
+    }
+    // If dragged left more than 50px, close sidebar  
+    else if (dragDistance < -50 && isSidebarOpen) {
+      setIsSidebarOpen(false)
+      setIsDragging(false)
+    }
+  }
+
+  const handleDragEnd = (e) => {
+    if (isDragging) {
+      // If we didn't drag far enough, treat it as a click
+      const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX
+      const dragDistance = Math.abs(clientX - dragStartX)
+      
+      if (dragDistance < 10) { // Small distance = click
+        toggleSidebar()
+      }
+    }
+    setIsDragging(false)
+  }
+
+  // Add global event listeners for drag
+  React.useEffect(() => {
+    if (isDragging) {
+      const handleMouseMove = (e) => handleDragMove(e)
+      const handleMouseUp = (e) => handleDragEnd(e)
+      const handleTouchMove = (e) => handleDragMove(e)
+      const handleTouchEnd = (e) => handleDragEnd(e)
+
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.addEventListener('touchmove', handleTouchMove)
+      document.addEventListener('touchend', handleTouchEnd)
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener('touchmove', handleTouchMove)
+        document.removeEventListener('touchend', handleTouchEnd)
+      }
+    }
+  }, [isDragging, dragStartX, isSidebarOpen])
+
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       {/* Mobile sidebar overlay */}
@@ -115,10 +178,10 @@ const Layout = ({ children }) => {
         transition={{ duration: 0.3 }}
       >
         <button
-          onClick={toggleSidebar}
-          onTouchStart={toggleSidebar} // Add touch support
-          className="bg-gradient-to-br from-primary-500 via-accent-500 to-fun-500 text-white w-3.5 h-42 rounded-r-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center space-y-1 group touch-manipulation"
-          title={isSidebarOpen ? "Close menu" : "Open menu"}
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
+          className={`bg-gradient-to-br from-primary-500 via-accent-500 to-fun-500 text-white w-3.5 h-52 rounded-r-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center space-y-1 group touch-manipulation ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          title={isSidebarOpen ? "Close menu" : "Open menu (click or drag to toggle)"}
         >
           {/* Top Arrow */}
           <motion.div

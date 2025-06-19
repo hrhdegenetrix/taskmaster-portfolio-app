@@ -305,17 +305,24 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     }
     console.log('Current selectedTags before removal:', formData.selectedTags) // Debug log
     
-    // Force a complete re-render by using a callback
+    // Force a complete re-render by using a callback and forcing a new render
     setFormData(prev => {
       const newSelectedTags = prev.selectedTags.filter(id => id !== tagId)
       console.log('New selectedTags after removal:', newSelectedTags) // Debug log
       
       // Return a completely new object to force re-render
-      return {
+      const newFormData = {
         ...prev,
-        selectedTags: [...newSelectedTags], // Create new array reference
+        selectedTags: newSelectedTags, // Don't spread - just assign directly
         _tagUpdateId: Date.now() // Force change detection
       }
+      
+      // Force a re-render on next tick
+      setTimeout(() => {
+        console.log('Forced re-render - selectedTags now:', newFormData.selectedTags)
+      }, 0)
+      
+      return newFormData
     })
   }
 
@@ -626,7 +633,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                   const isSelected = formData.selectedTags.includes(tag.id)
                   console.log(`Tag ${tag.name} (${tag.id}): selected = ${isSelected}`) // Debug log
                   return (
-                    <div key={`${tag.id}-${isSelected}-${formData._tagUpdateId || 0}`} className="relative">
+                    <div key={`${tag.id}-${formData._tagUpdateId || 0}`} className="relative">
                       {isSelected ? (
                         <div className="flex items-center bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105">
                           <span className="mr-2">{tag.name}</span>
