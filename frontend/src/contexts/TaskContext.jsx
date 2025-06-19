@@ -64,8 +64,8 @@ const initialState = {
     tags: []
   },
   sort: {
-    field: 'createdAt',
-    order: 'desc'
+    field: 'dueDate',
+    order: 'asc'
   },
   viewMode: 'list', // 'list' | 'grid' | 'kanban'
   selectedTasks: []

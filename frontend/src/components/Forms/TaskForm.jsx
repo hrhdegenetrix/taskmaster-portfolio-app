@@ -35,7 +35,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     description: task?.description || '',
     priority: task?.priority || 'MEDIUM',
     status: task?.status || 'PENDING',
-    dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+    dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     dueTime: task?.dueDate ? (() => {
       const date = new Date(task.dueDate);
       // Check if it's set to end of day (23:59:59) - if so, no specific time was set
@@ -146,14 +146,43 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     }))
   }
 
-  // Create new tag
+  // Remove tag from selection
+  const removeTag = (tagId, event) => {
+    event.stopPropagation() // Prevent the toggle when clicking X
+    setFormData(prev => ({
+      ...prev,
+      selectedTags: prev.selectedTags.filter(id => id !== tagId)
+    }))
+  }
+
+  // Create new tag(s) - supports comma separation
   const handleCreateTag = () => {
     if (!newTag.trim()) return
     
-    createTagMutation.mutate({
-      name: newTag.trim(),
-      color: '#8b5cf6' // Default purple color
+    // Split by comma and create multiple tags
+    const tagNames = newTag.split(',').map(name => name.trim()).filter(name => name.length > 0)
+    
+    tagNames.forEach(tagName => {
+      // Check if tag already exists
+      const existingTag = tags.find(tag => tag.name.toLowerCase() === tagName.toLowerCase())
+      if (existingTag) {
+        // Add existing tag to selection if not already selected
+        if (!formData.selectedTags.includes(existingTag.id)) {
+          setFormData(prev => ({
+            ...prev,
+            selectedTags: [...prev.selectedTags, existingTag.id]
+          }))
+        }
+      } else {
+        // Create new tag
+        createTagMutation.mutate({
+          name: tagName,
+          color: '#8b5cf6' // Default purple color
+        })
+      }
     })
+    
+    setNewTag('')
   }
 
   // Create new category
@@ -372,10 +401,12 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                   onChange={(e) => handleChange('dueTime', e.target.value)}
                   className="px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
                   disabled={!formData.dueDate}
+                  title="Click to select time or type HH:MM format"
+                  placeholder="HH:MM"
                 />
               </div>
               <p className="text-gray-500 text-xs mt-2">
-                💡 Time is optional - without it, tasks are due at end of day
+                💡 Time is optional - without it, tasks are due at end of day. Click time field or type directly (e.g., 14:30)
               </p>
             </div>
           </div>
@@ -427,22 +458,35 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                 Tags 🏷️
               </label>
               <div className="flex flex-wrap gap-2 mb-3">
-                {tags.map(tag => (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => toggleTag(tag.id)}
-                    className={`
-                      px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105
-                      ${formData.selectedTags.includes(tag.id)
-                        ? 'bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg'
-                        : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500'
-                      }
-                    `}
-                  >
-                    {tag.name}
-                  </button>
-                ))}
+                {tags.map(tag => {
+                  const isSelected = formData.selectedTags.includes(tag.id)
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => toggleTag(tag.id)}
+                      className={`
+                        group relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105
+                        ${isSelected
+                          ? 'bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg'
+                          : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500'
+                        }
+                      `}
+                    >
+                      <span className={isSelected ? 'mr-1' : ''}>{tag.name}</span>
+                      {isSelected && (
+                        <button
+                          type="button"
+                          onClick={(e) => removeTag(tag.id, e)}
+                          className="ml-1 inline-flex items-center justify-center w-4 h-4 text-white hover:text-red-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          title="Remove tag"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
               
               {/* Create New Tag */}
@@ -451,7 +495,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                   type="text"
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
-                  placeholder="Create new tag... 🆕"
+                  placeholder="Create tags (separate with commas)... 🆕"
                   className="flex-1 px-4 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreateTag())}
                 />

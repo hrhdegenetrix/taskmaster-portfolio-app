@@ -31,6 +31,8 @@ const Tasks = () => {
     tags,
     filters,
     setFilters,
+    sort,
+    setSort,
     viewMode,
     setViewMode,
     selectedTasks,
@@ -239,31 +241,52 @@ const Tasks = () => {
         </div>
       </div>
 
-      {/* View Mode Toggle */}
+      {/* View Mode Toggle & Sorting */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">View:</span>
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                viewMode === 'list'
-                  ? 'bg-white dark:bg-gray-600 text-primary-600 shadow-md'
-                  : 'text-gray-600 dark:text-gray-400'
-              }`}
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">View:</span>
+            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  viewMode === 'list'
+                    ? 'bg-white dark:bg-gray-600 text-primary-600 shadow-md'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                📋 List
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  viewMode === 'grid'
+                    ? 'bg-white dark:bg-gray-600 text-primary-600 shadow-md'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                🔲 Grid
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Sort by:</span>
+            <select
+              value={`${sort.field}-${sort.order}`}
+              onChange={(e) => {
+                const [field, order] = e.target.value.split('-')
+                setSort(field, order)
+              }}
+              className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              📋 List
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                viewMode === 'grid'
-                  ? 'bg-white dark:bg-gray-600 text-primary-600 shadow-md'
-                  : 'text-gray-600 dark:text-gray-400'
-              }`}
-            >
-              🔲 Grid
-            </button>
+              <option value="dueDate-asc">📅 Due Date (Earliest)</option>
+              <option value="dueDate-desc">📅 Due Date (Latest)</option>
+              <option value="priority-desc">🔥 Priority (High to Low)</option>
+              <option value="priority-asc">🔥 Priority (Low to High)</option>
+              <option value="createdAt-desc">🕒 Recently Added</option>
+              <option value="createdAt-asc">🕒 Oldest First</option>
+            </select>
           </div>
         </div>
 

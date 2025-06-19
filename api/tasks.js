@@ -23,7 +23,9 @@ module.exports = async (req, res) => {
           priority, 
           categoryId, 
           completed,
-          search 
+          search,
+          sortBy = 'dueDate',
+          sortOrder = 'asc'
         } = req.query;
 
         const pageNum = parseInt(page);
@@ -43,16 +45,36 @@ module.exports = async (req, res) => {
           ];
         }
 
+        // Build order by clause
+        const orderBy = [];
+        
+        // Always put completed tasks at the end, but allow sorting within groups
+        orderBy.push({ completed: 'asc' });
+        
+        // Add the requested sort
+        if (sortBy === 'priority') {
+          orderBy.push({ priority: sortOrder === 'asc' ? 'asc' : 'desc' });
+        } else if (sortBy === 'dueDate') {
+          // For dueDate, put null values last when ascending, first when descending
+          orderBy.push({ 
+            dueDate: { 
+              sort: sortOrder === 'asc' ? 'asc' : 'desc',
+              nulls: sortOrder === 'asc' ? 'last' : 'first'
+            }
+          });
+        } else if (sortBy === 'position') {
+          orderBy.push({ position: sortOrder === 'asc' ? 'asc' : 'desc' });
+        } else {
+          // Default to createdAt
+          orderBy.push({ createdAt: sortOrder === 'asc' ? 'asc' : 'desc' });
+        }
+
         const [tasks, total] = await Promise.all([
           prisma.task.findMany({
             where,
             skip,
             take: limitNum,
-            orderBy: [
-              { completed: 'asc' },
-              { priority: 'desc' },
-              { createdAt: 'desc' }
-            ],
+            orderBy,
             include: {
               category: true,
               tags: {
