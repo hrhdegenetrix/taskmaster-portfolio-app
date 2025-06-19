@@ -86,8 +86,8 @@ const Analytics = () => {
 
   const isLoading = overviewLoading || trendsLoading || productivityLoading || categoriesLoading
 
-  // Achievement system - calculate achievements based on localStorage ONLY
-  const getAchievements = () => {
+  // Memoize achievements to prevent infinite re-renders
+  const achievements = useMemo(() => {
     if (!lifetimeCompleted && lifetimeCompleted !== 0) return [] // Wait for localStorage to load
     
     // Use ONLY localStorage values - never override them!
@@ -203,7 +203,62 @@ const Analytics = () => {
     ]
     
     return achievements.sort((a, b) => b.unlocked - a.unlocked)
-  }
+  }, [lifetimeCompleted, lifetimeTotal, productivity?.streaks?.current, productivity?.streaks?.longest])
+
+  const unlockedCount = achievements.filter(a => a.unlocked).length
+
+  // Check for newly unlocked achievements and show notifications
+  React.useEffect(() => {
+    const currentlyUnlocked = new Set(achievements.filter(a => a.unlocked).map(a => a.id))
+    
+    // Find newly unlocked achievements
+    const newlyUnlocked = achievements.filter(a => 
+      a.unlocked && !previouslyUnlocked.has(a.id)
+    )
+    
+    // Show notifications for new achievements
+    newlyUnlocked.forEach(achievement => {
+      toast.success(
+        `🏆 Achievement Unlocked!\n${achievement.title}`,
+        {
+          duration: 5000,
+          style: {
+            background: 'linear-gradient(to right, #8B5CF6, #EC4899)',
+            color: 'white',
+            fontWeight: 'bold',
+            borderRadius: '16px',
+            padding: '16px',
+          },
+          iconTheme: {
+            primary: '#FFD700',
+            secondary: '#FFFFFF',
+          },
+        }
+      )
+    })
+    
+    // Update previously unlocked set
+    if (newlyUnlocked.length > 0 || previouslyUnlocked.size === 0) {
+      setPreviouslyUnlocked(currentlyUnlocked)
+    }
+  }, [achievements, previouslyUnlocked])
+
+  // Invalidate analytics cache when tasks or lifetime counts change
+  React.useEffect(() => {
+    // This will trigger a refetch of analytics data when tasks or lifetime data changes
+    if (allTasks.length > 0 || lifetimeCompleted > 0 || lifetimeTotal > 0) {
+      // Small delay to ensure the analytics reflect the latest changes
+      const timer = setTimeout(() => {
+        // Properly invalidate React Query caches
+        queryClient.invalidateQueries(['analytics-overview'])
+        queryClient.invalidateQueries(['analytics-trends'])
+        queryClient.invalidateQueries(['analytics-productivity'])
+        queryClient.invalidateQueries(['analytics-categories'])
+      }, 500)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [allTasks.length, lifetimeCompleted, lifetimeTotal, queryClient])
 
   // Color schemes for charts
   const COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#6366F1', '#84CC16']
@@ -290,6 +345,7 @@ const Analytics = () => {
     </motion.div>
   )
 
+  // Early return for loading AFTER all hooks have been called
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -305,66 +361,6 @@ const Analytics = () => {
       </div>
     )
   }
-
-  // Memoize achievements to prevent infinite re-renders
-  const achievements = useMemo(() => {
-    return getAchievements()
-  }, [lifetimeCompleted, lifetimeTotal, productivity?.streaks?.current, productivity?.streaks?.longest])
-  
-  const unlockedCount = achievements.filter(a => a.unlocked).length
-
-  // Check for newly unlocked achievements and show notifications
-  React.useEffect(() => {
-    const currentlyUnlocked = new Set(achievements.filter(a => a.unlocked).map(a => a.id))
-    
-    // Find newly unlocked achievements
-    const newlyUnlocked = achievements.filter(a => 
-      a.unlocked && !previouslyUnlocked.has(a.id)
-    )
-    
-    // Show notifications for new achievements
-    newlyUnlocked.forEach(achievement => {
-      toast.success(
-        `🏆 Achievement Unlocked!\n${achievement.title}`,
-        {
-          duration: 5000,
-          style: {
-            background: 'linear-gradient(to right, #8B5CF6, #EC4899)',
-            color: 'white',
-            fontWeight: 'bold',
-            borderRadius: '16px',
-            padding: '16px',
-          },
-          iconTheme: {
-            primary: '#FFD700',
-            secondary: '#FFFFFF',
-          },
-        }
-      )
-    })
-    
-    // Update previously unlocked set
-    if (newlyUnlocked.length > 0 || previouslyUnlocked.size === 0) {
-      setPreviouslyUnlocked(currentlyUnlocked)
-    }
-  }, [achievements, previouslyUnlocked])
-
-  // Invalidate analytics cache when tasks or lifetime counts change
-  React.useEffect(() => {
-    // This will trigger a refetch of analytics data when tasks or lifetime data changes
-    if (allTasks.length > 0 || lifetimeCompleted > 0 || lifetimeTotal > 0) {
-      // Small delay to ensure the analytics reflect the latest changes
-      const timer = setTimeout(() => {
-        // Properly invalidate React Query caches
-        queryClient.invalidateQueries(['analytics-overview'])
-        queryClient.invalidateQueries(['analytics-trends'])
-        queryClient.invalidateQueries(['analytics-productivity'])
-        queryClient.invalidateQueries(['analytics-categories'])
-      }, 500)
-      
-      return () => clearTimeout(timer)
-    }
-  }, [allTasks.length, lifetimeCompleted, lifetimeTotal, queryClient])
 
   return (
     <div className="space-y-8">
@@ -559,14 +555,14 @@ const Analytics = () => {
             
             <div className="bg-white bg-opacity-20 rounded-xl p-4">
               <Coffee className="w-6 h-6 mb-2" />
-                             <h3 className="font-bold">Motivation Level</h3>
-               <p className="text-2xl font-bold">
-                 {lifetimeCompleted >= 20 ? 'Incredible! 🔥' : 
-                  lifetimeCompleted >= 10 ? 'Amazing! 👍' : 
-                  lifetimeCompleted >= 5 ? 'Great! 💪' : 
-                  lifetimeCompleted >= 1 ? 'Getting Started! 🌱' : 'Ready to Begin! ✨'}
-               </p>
-               <p className="text-sm opacity-90">Based on total completions: {lifetimeCompleted}</p>
+              <h3 className="font-bold">Motivation Level</h3>
+              <p className="text-2xl font-bold">
+                {lifetimeCompleted >= 20 ? 'Incredible! 🔥' : 
+                 lifetimeCompleted >= 10 ? 'Amazing! 👍' : 
+                 lifetimeCompleted >= 5 ? 'Great! 💪' : 
+                 lifetimeCompleted >= 1 ? 'Getting Started! 🌱' : 'Ready to Begin! ✨'}
+              </p>
+              <p className="text-sm opacity-90">Based on total completions: {lifetimeCompleted}</p>
             </div>
           </div>
         </motion.div>
