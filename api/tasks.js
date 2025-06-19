@@ -50,6 +50,7 @@ module.exports = async (req, res) => {
         
         // Always put completed tasks at the end, but allow sorting within groups
         // false (uncompleted) comes before true (completed) with 'asc'
+        // Note: In Prisma/PostgreSQL, false < true, so 'asc' puts false first
         orderBy.push({ completed: 'asc' });
         
         // Add the requested sort
