@@ -278,6 +278,26 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     }
   )
 
+  // Delete tag mutation
+  const deleteTagMutation = useMutation(
+    (tagId) => taskService.deleteTag(tagId),
+    {
+      onSuccess: (deletedTag, tagId) => {
+        toast.success(`Tag deleted! 🗑️`)
+        queryClient.invalidateQueries('tags')
+        // Remove the deleted tag from selected tags if it was selected
+        setFormData(prev => ({
+          ...prev,
+          selectedTags: prev.selectedTags.filter(id => id !== tagId)
+        }))
+      },
+      onError: (error) => {
+        toast.error('Failed to delete tag 😕')
+        console.error('Tag deletion error:', error)
+      }
+    }
+  )
+
   // Handle form input changes
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -296,9 +316,30 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     }))
   }
 
-  // Remove tag from selection with proper state management
-  const removeTag = React.useCallback((tagId, event) => {
-    console.log('🏷️ removeTag called with:', tagId) // Debug log
+  // Delete tag from system with confirmation
+  const deleteTag = React.useCallback((tagId, tagName, event) => {
+    console.log('🗑️ deleteTag called with:', tagId, tagName) // Debug log
+    if (event) {
+      event.stopPropagation()
+      event.preventDefault()
+    }
+    
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete the tag "${tagName}"? This will remove it from all tasks and cannot be undone! 🗑️`
+    )
+    
+    if (confirmed) {
+      console.log('✅ User confirmed deletion of tag:', tagName) // Debug log
+      deleteTagMutation.mutate(tagId)
+    } else {
+      console.log('❌ User cancelled deletion of tag:', tagName) // Debug log
+    }
+  }, [deleteTagMutation])
+
+  // Remove tag from selection (for unselecting without deleting)
+  const unselectTag = React.useCallback((tagId, event) => {
+    console.log('🏷️ unselectTag called with:', tagId) // Debug log
     if (event) {
       event.stopPropagation()
       event.preventDefault()
@@ -630,17 +671,32 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                       {isSelected ? (
                         <div className="flex items-center bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105">
                           <span className="mr-2">{tag.name}</span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              console.log(`🗑️ Removing tag: ${tag.name} (${tag.id})`) // Debug log
-                              removeTag(tag.id, e)
-                            }}
-                            className="w-4 h-4 flex items-center justify-center text-white hover:text-red-200 hover:bg-white hover:bg-opacity-20 rounded-full transition-all duration-200 ml-1"
-                            title="Remove tag"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                          <div className="flex items-center space-x-1 ml-1">
+                            {/* Unselect button (smaller, less prominent) */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                console.log(`↩️ Unselecting tag: ${tag.name} (${tag.id})`) // Debug log
+                                unselectTag(tag.id, e)
+                              }}
+                              className="w-4 h-4 flex items-center justify-center text-white hover:text-blue-200 hover:bg-white hover:bg-opacity-20 rounded-full transition-all duration-200"
+                              title="Unselect tag (keep tag in system)"
+                            >
+                              <span className="text-xs">↩</span>
+                            </button>
+                            {/* Delete button (more prominent) */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                console.log(`🗑️ Deleting tag: ${tag.name} (${tag.id})`) // Debug log
+                                deleteTag(tag.id, tag.name, e)
+                              }}
+                              className="w-4 h-4 flex items-center justify-center text-white hover:text-red-200 hover:bg-red-500 hover:bg-opacity-80 rounded-full transition-all duration-200"
+                              title="Delete tag permanently from system"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <button
