@@ -91,27 +91,34 @@ module.exports = async (req, res) => {
           priority = 'MEDIUM',
           dueDate,
           categoryId,
-          tagIds = []
+          tags = []
         } = req.body;
 
         if (!title) {
           return res.status(400).json({ error: 'Task title is required' });
         }
 
-        // Create task with tags
-        const newTask = await prisma.task.create({
+        // Process due date - set to end of day if no time specified
+        let processedDueDate = null;
+        if (dueDate) {
+          const date = new Date(dueDate);
+          // If no time is specified, set to end of day (23:59:59)
+          if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0) {
+            date.setHours(23, 59, 59, 999);
+          }
+          processedDueDate = date;
+        }
+
+        // Create the task first
+        const task = await prisma.task.create({
           data: {
-            title,
-            description,
-            status,
-            priority,
-            dueDate: dueDate ? new Date(dueDate) : null,
+            title: title.trim(),
+            description: description?.trim(),
+            status: status.toUpperCase(),
+            priority: priority.toUpperCase(),
+            dueDate: processedDueDate,
             categoryId,
-            tags: {
-              create: tagIds.map(tagId => ({
-                tag: { connect: { id: tagId } }
-              }))
-            }
+            position: 0
           },
           include: {
             category: true,
@@ -123,10 +130,36 @@ module.exports = async (req, res) => {
           }
         });
 
-        // Transform response
+        // Add tags if provided
+        if (tags.length > 0) {
+          await Promise.all(
+            tags.map(async (tagId) => {
+              return prisma.taskTag.create({
+                data: {
+                  taskId: task.id,
+                  tagId
+                }
+              });
+            })
+          );
+        }
+
+        // Fetch the complete task with tags
+        const completeTask = await prisma.task.findUnique({
+          where: { id: task.id },
+          include: {
+            category: true,
+            tags: {
+              include: {
+                tag: true
+              }
+            }
+          }
+        });
+
         const transformedTask = {
-          ...newTask,
-          tags: newTask.tags.map(taskTag => taskTag.tag)
+          ...completeTask,
+          tags: completeTask.tags.map(tt => tt.tag)
         };
 
         res.status(201).json(transformedTask);
