@@ -45,10 +45,10 @@ const Analytics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month')
   const [showAchievements, setShowAchievements] = useState(true)
 
-  // Fetch analytics data
+  // Fetch analytics data using consolidated endpoint
   const { data: overview, isLoading: overviewLoading } = useQuery(
     ['analytics-overview', selectedPeriod],
-    () => analyticsService.getOverview(selectedPeriod),
+    () => fetch(`/api/analytics?type=overview&period=${selectedPeriod}`).then(res => res.json()),
     {
       onError: () => toast.error('Failed to load analytics data 📊')
     }
@@ -56,7 +56,7 @@ const Analytics = () => {
 
   const { data: trends, isLoading: trendsLoading } = useQuery(
     ['analytics-trends', selectedPeriod],
-    () => analyticsService.getTrends(selectedPeriod, 'day'),
+    () => fetch(`/api/analytics?type=trends&period=${selectedPeriod}&granularity=day`).then(res => res.json()),
     {
       onError: () => toast.error('Failed to load trend data 📈')
     }
@@ -64,7 +64,7 @@ const Analytics = () => {
 
   const { data: productivity, isLoading: productivityLoading } = useQuery(
     ['analytics-productivity', selectedPeriod],
-    () => analyticsService.getProductivity(selectedPeriod),
+    () => fetch(`/api/analytics?type=productivity&period=${selectedPeriod}`).then(res => res.json()),
     {
       onError: () => toast.error('Failed to load productivity data 🚀')
     }
@@ -72,7 +72,7 @@ const Analytics = () => {
 
   const { data: categories, isLoading: categoriesLoading } = useQuery(
     ['analytics-categories', selectedPeriod],
-    () => analyticsService.getCategoryAnalytics(selectedPeriod),
+    () => fetch(`/api/analytics?type=categories&period=${selectedPeriod}`).then(res => res.json()),
     {
       onError: () => toast.error('Failed to load category data 📁')
     }
