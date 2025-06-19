@@ -84,7 +84,8 @@ const Analytics = () => {
   const getAchievements = () => {
     if (!overview?.overview) return []
     
-    const { totalTasks, completedTasks, completionRate } = overview.overview
+    // Use lifetime data for achievements (not period-filtered data)
+    const { lifetimeTotalTasks, lifetimeCompletedTasks, lifetimeCompletionRate } = overview.overview
     const currentStreak = productivity?.streaks?.current || 0
     const longestStreak = productivity?.streaks?.longest || 0
     
@@ -94,8 +95,8 @@ const Analytics = () => {
         title: 'Getting Started! 🌱',
         description: 'Created your first task',
         icon: Sparkles,
-        unlocked: totalTasks >= 1,
-        progress: Math.min(totalTasks, 1),
+        unlocked: lifetimeTotalTasks >= 1,
+        progress: Math.min(lifetimeTotalTasks, 1),
         max: 1,
         color: 'from-green-400 to-green-600'
       },
@@ -104,8 +105,8 @@ const Analytics = () => {
         title: 'Task Creator 📝',
         description: 'Created 10 tasks',
         icon: CheckCircle,
-        unlocked: totalTasks >= 10,
-        progress: Math.min(totalTasks, 10),
+        unlocked: lifetimeTotalTasks >= 10,
+        progress: Math.min(lifetimeTotalTasks, 10),
         max: 10,
         color: 'from-blue-400 to-blue-600'
       },
@@ -114,8 +115,8 @@ const Analytics = () => {
         title: 'Productivity Ninja 🥷',
         description: 'Created 50 tasks',
         icon: Zap,
-        unlocked: totalTasks >= 50,
-        progress: Math.min(totalTasks, 50),
+        unlocked: lifetimeTotalTasks >= 50,
+        progress: Math.min(lifetimeTotalTasks, 50),
         max: 50,
         color: 'from-purple-400 to-purple-600'
       },
@@ -124,8 +125,8 @@ const Analytics = () => {
         title: 'Task Master 👑',
         description: 'Created 100 tasks',
         icon: Crown,
-        unlocked: totalTasks >= 100,
-        progress: Math.min(totalTasks, 100),
+        unlocked: lifetimeTotalTasks >= 100,
+        progress: Math.min(lifetimeTotalTasks, 100),
         max: 100,
         color: 'from-yellow-400 to-yellow-600'
       },
@@ -134,8 +135,8 @@ const Analytics = () => {
         title: 'Completionist ✅',
         description: 'Completed 25 tasks',
         icon: Trophy,
-        unlocked: completedTasks >= 25,
-        progress: Math.min(completedTasks, 25),
+        unlocked: lifetimeCompletedTasks >= 25,
+        progress: Math.min(lifetimeCompletedTasks, 25),
         max: 25,
         color: 'from-emerald-400 to-emerald-600'
       },
@@ -144,8 +145,8 @@ const Analytics = () => {
         title: 'High Achiever 🏆',
         description: 'Completed 100 tasks',
         icon: Award,
-        unlocked: completedTasks >= 100,
-        progress: Math.min(completedTasks, 100),
+        unlocked: lifetimeCompletedTasks >= 100,
+        progress: Math.min(lifetimeCompletedTasks, 100),
         max: 100,
         color: 'from-orange-400 to-orange-600'
       },
@@ -154,8 +155,8 @@ const Analytics = () => {
         title: 'Perfectionist 💎',
         description: 'Achieve 90% completion rate',
         icon: Star,
-        unlocked: completionRate >= 90,
-        progress: Math.min(completionRate, 90),
+        unlocked: lifetimeCompletionRate >= 90,
+        progress: Math.min(lifetimeCompletionRate, 90),
         max: 90,
         color: 'from-pink-400 to-pink-600'
       },
@@ -332,17 +333,17 @@ const Analytics = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total Tasks"
-            value={overview.overview.totalTasks}
+            value={overview.overview.lifetimeTotalTasks}
             icon={CheckCircle}
             color="from-blue-500 to-blue-600"
-            subtitle="Tasks created"
+            subtitle={`${overview.overview.totalTasks} this ${selectedPeriod}`}
           />
           <StatCard
             title="Completed"
-            value={overview.overview.completedTasks}
+            value={overview.overview.lifetimeCompletedTasks}
             icon={Trophy}
             color="from-green-500 to-green-600"
-            subtitle={`${overview.overview.completionRate}% completion rate`}
+            subtitle={`${overview.overview.lifetimeCompletionRate}% lifetime rate`}
           />
           <StatCard
             title="In Progress"
@@ -492,12 +493,12 @@ const Analytics = () => {
             <div className="bg-white bg-opacity-20 rounded-xl p-4">
               <Coffee className="w-6 h-6 mb-2" />
               <h3 className="font-bold">Motivation Level</h3>
-              <p className="text-2xl font-bold">
-                {overview?.overview?.completionRate > 80 ? 'Excellent! 🔥' : 
-                 overview?.overview?.completionRate > 60 ? 'Great! 👍' : 
-                 overview?.overview?.completionRate > 40 ? 'Good! 💪' : 'Keep Going! 🌱'}
-              </p>
-              <p className="text-sm opacity-90">Based on completion rate</p>
+                             <p className="text-2xl font-bold">
+                 {overview?.overview?.lifetimeCompletionRate > 80 ? 'Excellent! 🔥' : 
+                  overview?.overview?.lifetimeCompletionRate > 60 ? 'Great! 👍' : 
+                  overview?.overview?.lifetimeCompletionRate > 40 ? 'Good! 💪' : 'Keep Going! 🌱'}
+               </p>
+               <p className="text-sm opacity-90">Based on lifetime completion rate</p>
             </div>
           </div>
         </motion.div>

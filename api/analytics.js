@@ -76,6 +76,7 @@ module.exports = async (req, res) => {
 
 // Overview analytics
 async function getOverviewData(res, dateFilter, period) {
+  // For period-specific data, use date filters
   const [
     totalTasks,
     completedTasks,
@@ -116,6 +117,15 @@ async function getOverviewData(res, dateFilter, period) {
         dueDate: { not: null }
       }
     })
+  ]);
+
+  // For lifetime totals (ignoring date filters for achievements)
+  const [
+    lifetimeTotalTasks,
+    lifetimeCompletedTasks
+  ] = await Promise.all([
+    prisma.task.count(), // All tasks ever created
+    prisma.task.count({ where: { completed: true } }) // All currently completed tasks
   ]);
 
   // Calculate completion rate
@@ -163,15 +173,24 @@ async function getOverviewData(res, dateFilter, period) {
     })
   );
 
+  // Calculate lifetime completion rate for achievements
+  const lifetimeCompletionRate = lifetimeTotalTasks > 0 ? (lifetimeCompletedTasks / lifetimeTotalTasks) * 100 : 0;
+
   res.json({
     overview: {
+      // Period-specific data (for charts and period analysis)
       totalTasks,
       completedTasks,
       pendingTasks,
       inProgressTasks,
       overdueTasks,
       tasksWithDueDate,
-      completionRate: Math.round(completionRate * 100) / 100
+      completionRate: Math.round(completionRate * 100) / 100,
+      
+      // Lifetime data (for achievements and overall progress)
+      lifetimeTotalTasks,
+      lifetimeCompletedTasks,
+      lifetimeCompletionRate: Math.round(lifetimeCompletionRate * 100) / 100
     },
     priorityDistribution: priorityStats.map(stat => ({
       priority: stat.priority,
