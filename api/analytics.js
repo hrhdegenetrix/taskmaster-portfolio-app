@@ -119,16 +119,7 @@ async function getOverviewData(res, dateFilter, period) {
     })
   ]);
 
-  // For lifetime totals (ignoring date filters for achievements)
-  const [
-    lifetimeTotalTasks,
-    lifetimeCompletedTasks
-  ] = await Promise.all([
-    prisma.task.count(), // All tasks ever created
-    prisma.task.count({ where: { completed: true } }) // All currently completed tasks
-  ]);
-
-  // Calculate completion rate
+  // Calculate completion rate for the period
   const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
   // Get priority distribution
@@ -173,9 +164,6 @@ async function getOverviewData(res, dateFilter, period) {
     })
   );
 
-  // Calculate lifetime completion rate for achievements
-  const lifetimeCompletionRate = lifetimeTotalTasks > 0 ? (lifetimeCompletedTasks / lifetimeTotalTasks) * 100 : 0;
-
   res.json({
     overview: {
       // Period-specific data (for charts and period analysis)
@@ -185,12 +173,10 @@ async function getOverviewData(res, dateFilter, period) {
       inProgressTasks,
       overdueTasks,
       tasksWithDueDate,
-      completionRate: Math.round(completionRate * 100) / 100,
+      completionRate: Math.round(completionRate * 100) / 100
       
-      // Lifetime data (for achievements and overall progress)
-      lifetimeTotalTasks,
-      lifetimeCompletedTasks,
-      lifetimeCompletionRate: Math.round(lifetimeCompletionRate * 100) / 100
+      // NOTE: NO "lifetime" data here - frontend uses localStorage for that!
+      // The database only shows current state, not true lifetime including deletions
     },
     priorityDistribution: priorityStats.map(stat => ({
       priority: stat.priority,

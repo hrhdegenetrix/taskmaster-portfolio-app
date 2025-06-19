@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useQuery } from 'react-query'
+import { useQuery, useQueryClient } from 'react-query'
 import { 
   BarChart3, 
   TrendingUp, 
@@ -45,9 +45,11 @@ import toast from 'react-hot-toast'
 const Analytics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month')
   const [showAchievements, setShowAchievements] = useState(true)
+  const [previouslyUnlocked, setPreviouslyUnlocked] = useState(new Set())
   
   // Get the correct lifetime completed count from TaskContext (localStorage)
   const { lifetimeCompleted = 0, allTasks = [] } = useTask()
+  const queryClient = useQueryClient()
 
   // Fetch analytics data using consolidated endpoint
   const { data: overview, isLoading: overviewLoading } = useQuery(
@@ -84,14 +86,16 @@ const Analytics = () => {
 
   const isLoading = overviewLoading || trendsLoading || productivityLoading || categoriesLoading
 
-  // Achievement system - calculate achievements based on data
+  // Achievement system - calculate achievements based on localStorage ONLY
   const getAchievements = () => {
-    if (!overview?.overview) return []
+    if (!lifetimeCompleted && lifetimeCompleted !== 0) return [] // Wait for localStorage to load
     
-    // Use actual localStorage lifetimeCompleted and total tasks from context
-    const lifetimeTotalTasks = allTasks?.length || 0 // Current total tasks in database
-    const lifetimeCompletedTasks = lifetimeCompleted || 0 // From localStorage - true lifetime count
-    const lifetimeCompletionRate = lifetimeTotalTasks > 0 ? (lifetimeCompletedTasks / lifetimeTotalTasks) * 100 : 0
+    // Use ONLY localStorage values - never override them!
+    const lifetimeTotalTasks = allTasks?.length || 0 // Current tasks in database
+    const lifetimeCompletedTasks = lifetimeCompleted // TRUE lifetime count from localStorage (includes deleted)
+    const lifetimeCompletionRate = lifetimeCompletedTasks > 0 && lifetimeTotalTasks > 0 
+      ? (lifetimeCompletedTasks / Math.max(lifetimeCompletedTasks, lifetimeTotalTasks)) * 100 
+      : 0
     const currentStreak = productivity?.streaks?.current || 0
     const longestStreak = productivity?.streaks?.longest || 0
     
@@ -305,6 +309,59 @@ const Analytics = () => {
   const achievements = getAchievements()
   const unlockedCount = achievements.filter(a => a.unlocked).length
 
+  // Check for newly unlocked achievements and show notifications
+  React.useEffect(() => {
+    const currentlyUnlocked = new Set(achievements.filter(a => a.unlocked).map(a => a.id))
+    
+    // Find newly unlocked achievements
+    const newlyUnlocked = achievements.filter(a => 
+      a.unlocked && !previouslyUnlocked.has(a.id)
+    )
+    
+    // Show notifications for new achievements
+    newlyUnlocked.forEach(achievement => {
+      toast.success(
+        `🏆 Achievement Unlocked!\n${achievement.title}`,
+        {
+          duration: 5000,
+          style: {
+            background: 'linear-gradient(to right, #8B5CF6, #EC4899)',
+            color: 'white',
+            fontWeight: 'bold',
+            borderRadius: '16px',
+            padding: '16px',
+          },
+          iconTheme: {
+            primary: '#FFD700',
+            secondary: '#FFFFFF',
+          },
+        }
+      )
+    })
+    
+    // Update previously unlocked set
+    if (newlyUnlocked.length > 0 || previouslyUnlocked.size === 0) {
+      setPreviouslyUnlocked(currentlyUnlocked)
+    }
+  }, [achievements, previouslyUnlocked])
+
+  // Invalidate analytics cache when tasks change
+  React.useEffect(() => {
+    // This will trigger a refetch of analytics data when tasks change
+    if (allTasks.length > 0) {
+      // Small delay to ensure the analytics reflect the latest changes
+      const timer = setTimeout(() => {
+        // Properly invalidate React Query caches
+        queryClient.invalidateQueries(['analytics-overview'])
+        queryClient.invalidateQueries(['analytics-trends'])
+        queryClient.invalidateQueries(['analytics-productivity'])
+        queryClient.invalidateQueries(['analytics-categories'])
+      }, 500)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [allTasks.length, queryClient])
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -342,14 +399,14 @@ const Analytics = () => {
             value={allTasks?.length || 0}
             icon={CheckCircle}
             color="from-blue-500 to-blue-600"
-            subtitle={`${overview.overview.totalTasks || 0} this ${selectedPeriod}`}
+            subtitle={`${overview?.overview?.totalTasks || 0} this ${selectedPeriod}`}
           />
           <StatCard
-            title="Completed"
-            value={lifetimeCompleted || 0}
+            title="Completed (Lifetime)"
+            value={lifetimeCompleted}
             icon={Trophy}
             color="from-green-500 to-green-600"
-            subtitle={`${(((lifetimeCompleted || 0) / Math.max(allTasks?.length || 0, 1)) * 100).toFixed(1)}% lifetime rate`}
+            subtitle="Including deleted tasks 🎉"
           />
           <StatCard
             title="In Progress"
@@ -500,14 +557,12 @@ const Analytics = () => {
               <Coffee className="w-6 h-6 mb-2" />
                              <h3 className="font-bold">Motivation Level</h3>
                <p className="text-2xl font-bold">
-                 {(() => {
-                   const rate = ((lifetimeCompleted || 0) / Math.max(allTasks?.length || 0, 1)) * 100;
-                   return rate > 80 ? 'Excellent! 🔥' : 
-                          rate > 60 ? 'Great! 👍' : 
-                          rate > 40 ? 'Good! 💪' : 'Keep Going! 🌱';
-                 })()}
+                 {lifetimeCompleted >= 20 ? 'Incredible! 🔥' : 
+                  lifetimeCompleted >= 10 ? 'Amazing! 👍' : 
+                  lifetimeCompleted >= 5 ? 'Great! 💪' : 
+                  lifetimeCompleted >= 1 ? 'Getting Started! 🌱' : 'Ready to Begin! ✨'}
                </p>
-               <p className="text-sm opacity-90">Based on lifetime completion rate</p>
+               <p className="text-sm opacity-90">Based on total completions: {lifetimeCompleted}</p>
             </div>
           </div>
         </motion.div>
