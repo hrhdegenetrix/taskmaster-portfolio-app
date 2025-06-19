@@ -548,10 +548,11 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
       className={`
         bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-primary-500 flex flex-col
         ${task.completed ? 'opacity-75' : ''}
-        ${viewMode === 'grid' ? 'h-48' : ''}
+        ${viewMode === 'grid' ? 'h-64' : ''}
       `}
     >
-      <div className="flex items-start justify-between mb-4">
+      {/* Header Section - Fixed height */}
+      <div className="flex items-start justify-between mb-3 flex-shrink-0">
         <div className="flex items-center space-x-3">
           <button 
             onClick={() => onToggleCompletion(task)}
@@ -570,7 +571,7 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
           </div>
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 flex-shrink-0">
           <button
             onClick={() => onEdit(task)}
             className="p-2 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
@@ -586,8 +587,10 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
         </div>
       </div>
 
+      {/* Title Section - Fixed height */}
       <h3 className={`
-        text-lg font-bold mb-3 transition-all duration-200 min-h-[3rem] flex items-start
+        text-lg font-bold mb-3 transition-all duration-200 flex-shrink-0 leading-tight
+        ${viewMode === 'grid' ? 'h-14 overflow-hidden' : 'min-h-[3rem]'}
         ${task.completed 
           ? 'text-gray-500 line-through' 
           : 'text-gray-900 dark:text-white'
@@ -596,38 +599,40 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
         {task.title}
       </h3>
 
-      <div className="flex-1 mb-3">
+      {/* Description Section - Controlled height */}
+      <div className={`mb-3 ${viewMode === 'grid' ? 'flex-shrink-0 h-12' : 'flex-1'}`}>
         {task.description ? (
-          <p className="text-gray-600 dark:text-gray-400 line-clamp-2 text-sm">
+          <p className={`text-gray-600 dark:text-gray-400 text-sm overflow-hidden ${viewMode === 'grid' ? 'line-clamp-2' : 'line-clamp-3'}`}>
             {task.description}
           </p>
         ) : (
-          <div className="h-8"></div>
+          <div className={`${viewMode === 'grid' ? 'h-8' : 'h-8'}`}></div>
         )}
       </div>
 
-      <div className="flex items-center justify-between min-h-[28px]">
-        <div className="flex items-center space-x-2 flex-1">
+      {/* Bottom Section - Fixed position */}
+      <div className={`flex items-center justify-between min-h-[28px] ${viewMode === 'grid' ? 'mt-auto flex-shrink-0' : ''}`}>
+        <div className="flex items-center space-x-2 flex-1 min-w-0">
           {category && (
-            <div className="flex items-center space-x-1 px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded-lg text-xs">
+            <div className="flex items-center space-x-1 px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded-lg text-xs flex-shrink-0">
               <span>{category.icon}</span>
-              <span className="font-medium text-gray-700 dark:text-gray-200">{category.name}</span>
+              <span className="font-medium text-gray-700 dark:text-gray-200 truncate">{category.name}</span>
             </div>
           )}
           
           {task.tags && task.tags.length > 0 && (
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-1 flex-shrink-0">
               <Tag className="w-3 h-3 text-gray-400" />
               <span className="text-xs text-gray-500">{task.tags.length}</span>
             </div>
           )}
         </div>
 
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 ml-2">
           {dueDateInfo && (
-            <div className={`flex items-center space-x-1 text-xs font-medium ${dueDateInfo.color}`}>
+            <div className={`flex items-center space-x-1 text-xs font-medium ${dueDateInfo.color} whitespace-nowrap`}>
               <span>{dueDateInfo.emoji}</span>
-              <span>{dueDateInfo.text}</span>
+              <span className="truncate">{dueDateInfo.text}</span>
             </div>
           )}
         </div>
