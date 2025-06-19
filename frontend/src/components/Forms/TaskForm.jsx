@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
   Calendar,
@@ -21,6 +21,63 @@ import { useTask } from '../../contexts/TaskContext'
 import { taskService, uploadService } from '../../services/api'
 import { useMutation, useQueryClient } from 'react-query'
 import toast from 'react-hot-toast'
+
+// Confirmation Modal Component
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", isDangerous = false }) => {
+  if (!isOpen) return null
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center space-x-3 mb-4">
+            <div className={`p-2 rounded-full ${isDangerous ? 'bg-red-100 dark:bg-red-900' : 'bg-blue-100 dark:bg-blue-900'}`}>
+              <AlertCircle className={`w-5 h-5 ${isDangerous ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              {title}
+            </h3>
+          </div>
+          
+          <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+            {message}
+          </p>
+          
+          <div className="flex space-x-3">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-500 transition-all duration-200 font-medium"
+            >
+              {cancelText}
+            </button>
+            <button
+              onClick={onConfirm}
+              className={`flex-1 px-4 py-2 text-white rounded-xl transition-all duration-200 font-medium ${
+                isDangerous 
+                  ? 'bg-red-500 hover:bg-red-600' 
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
+            >
+              {confirmText}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
 
 // Custom Time Dropdown Component
 const TimeDropdown = ({ value, onChange, disabled }) => {
@@ -203,6 +260,15 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
   const [newCategory, setNewCategory] = useState('')
   const [uploadingImage, setUploadingImage] = useState(false)
   const [errors, setErrors] = useState({})
+  
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    isDangerous: false
+  })
 
   // Priority options with fun styling
   const priorityOptions = [
@@ -316,7 +382,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     }))
   }
 
-  // Delete tag from system with confirmation
+  // Delete tag from system with confirmation modal
   const deleteTag = React.useCallback((tagId, tagName, event) => {
     console.log('🗑️ deleteTag called with:', tagId, tagName) // Debug log
     if (event) {
@@ -324,18 +390,24 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       event.preventDefault()
     }
     
-    // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to permanently delete the tag "${tagName}"? This will remove it from all tasks and cannot be undone! 🗑️`
-    )
-    
-    if (confirmed) {
-      console.log('✅ User confirmed deletion of tag:', tagName) // Debug log
-      deleteTagMutation.mutate(tagId)
-    } else {
-      console.log('❌ User cancelled deletion of tag:', tagName) // Debug log
-    }
+    // Show confirmation modal
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Tag 🗑️',
+      message: `Are you sure you want to permanently delete the tag "${tagName}"? This will remove it from all tasks and cannot be undone!`,
+      onConfirm: () => {
+        console.log('✅ User confirmed deletion of tag:', tagName) // Debug log
+        deleteTagMutation.mutate(tagId)
+        setConfirmModal(prev => ({ ...prev, isOpen: false }))
+      },
+      isDangerous: true
+    })
   }, [deleteTagMutation])
+
+  // Close confirmation modal
+  const closeConfirmModal = () => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }))
+  }
 
   // Remove tag from selection (for unselecting without deleting)
   const unselectTag = React.useCallback((tagId, event) => {
@@ -669,34 +741,31 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                   return (
                     <div key={`tag-${tag.id}-${isSelected}-${formData._forceUpdateKey || 0}`} className="relative">
                       {isSelected ? (
-                        <div className="flex items-center bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105">
-                          <span className="mr-2">{tag.name}</span>
-                          <div className="flex items-center space-x-1 ml-1">
-                            {/* Unselect button (smaller, less prominent) */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                console.log(`↩️ Unselecting tag: ${tag.name} (${tag.id})`) // Debug log
-                                unselectTag(tag.id, e)
-                              }}
-                              className="w-4 h-4 flex items-center justify-center text-white hover:text-blue-200 hover:bg-white hover:bg-opacity-20 rounded-full transition-all duration-200"
-                              title="Unselect tag (keep tag in system)"
-                            >
-                              <span className="text-xs">↩</span>
-                            </button>
-                            {/* Delete button (more prominent) */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                console.log(`🗑️ Deleting tag: ${tag.name} (${tag.id})`) // Debug log
-                                deleteTag(tag.id, tag.name, e)
-                              }}
-                              className="w-4 h-4 flex items-center justify-center text-white hover:text-red-200 hover:bg-red-500 hover:bg-opacity-80 rounded-full transition-all duration-200"
-                              title="Delete tag permanently from system"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
+                        <div className="relative flex items-center bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 overflow-hidden">
+                          {/* Main clickable area for unselecting */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              console.log(`↩️ Unselecting tag: ${tag.name} (${tag.id})`) // Debug log
+                              unselectTag(tag.id, e)
+                            }}
+                            className="flex items-center px-3 py-2 pr-8 hover:bg-white hover:bg-opacity-10 transition-all duration-200 flex-1"
+                            title="Click to unselect tag (keep tag in system)"
+                          >
+                            <span>{tag.name}</span>
+                          </button>
+                          {/* Delete button overlay */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              console.log(`🗑️ Deleting tag: ${tag.name} (${tag.id})`) // Debug log
+                              deleteTag(tag.id, tag.name, e)
+                            }}
+                            className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center text-white hover:text-red-200 hover:bg-red-500 hover:bg-opacity-80 transition-all duration-200"
+                            title="Delete tag permanently from system"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
                         </div>
                       ) : (
                         <button
@@ -836,6 +905,18 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
             </button>
           </div>
         </form>
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={confirmModal.isOpen}
+          onClose={closeConfirmModal}
+          onConfirm={confirmModal.onConfirm}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmText="Delete"
+          cancelText="Cancel"
+          isDangerous={confirmModal.isDangerous}
+        />
       </motion.div>
     </motion.div>
   )
