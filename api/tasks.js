@@ -53,7 +53,6 @@ module.exports = async (req, res) => {
         
         // Add the requested sort
         if (sortBy === 'priority') {
-          // Custom priority order: OVERDUE, URGENT, HIGH, MEDIUM, LOW
           orderBy.push({ 
             priority: sortOrder === 'asc' ? 'asc' : 'desc'
           });
@@ -110,23 +109,24 @@ module.exports = async (req, res) => {
           return finalTask;
         });
 
-        // Sort so overdue tasks appear first (within their completion group)
-        const sortedTasks = transformedTasks.sort((a, b) => {
-          // First sort by completion status
+        // Final sort to prioritize overdue tasks within their completion groups
+        const finalSortedTasks = transformedTasks.sort((a, b) => {
+          // First, ensure completed tasks stay at the bottom
           if (a.completed !== b.completed) {
             return a.completed ? 1 : -1;
           }
           
-          // Then prioritize overdue tasks
-          if (a.priority === 'OVERDUE' && b.priority !== 'OVERDUE') return -1;
-          if (a.priority !== 'OVERDUE' && b.priority === 'OVERDUE') return 1;
+          // Within uncompleted tasks, prioritize overdue
+          if (!a.completed && !b.completed) {
+            if (a.priority === 'OVERDUE' && b.priority !== 'OVERDUE') return -1;
+            if (a.priority !== 'OVERDUE' && b.priority === 'OVERDUE') return 1;
+          }
           
-          // Then follow the original sort order for non-overdue tasks
-          return 0;
+          return 0; // Maintain original order for everything else
         });
 
         res.status(200).json({
-          tasks: sortedTasks,
+          tasks: finalSortedTasks,
           pagination: {
             page: pageNum,
             limit: limitNum,

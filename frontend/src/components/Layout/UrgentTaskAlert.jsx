@@ -9,16 +9,16 @@ const UrgentTaskAlert = () => {
   const { tasks } = useTask()
   const [isDismissed, setIsDismissed] = React.useState(false)
 
-  // Find urgent tasks due today
-  const urgentTasksToday = tasks.filter(task => 
-    task.priority === 'URGENT' && 
+  // Find urgent and overdue tasks
+  const criticalTasks = tasks.filter(task => 
+    (task.priority === 'URGENT' || task.priority === 'OVERDUE') && 
     task.dueDate && 
-    isToday(new Date(task.dueDate)) &&
-    !task.completed
+    !task.completed &&
+    (task.priority === 'OVERDUE' || isToday(new Date(task.dueDate)))
   )
 
-  // Don't show if no urgent tasks or dismissed
-  if (urgentTasksToday.length === 0 || isDismissed) {
+  // Don't show if no critical tasks or dismissed
+  if (criticalTasks.length === 0 || isDismissed) {
     return null
   }
 
@@ -38,23 +38,26 @@ const UrgentTaskAlert = () => {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold flex items-center">
-                  🚨 Urgent Task{urgentTasksToday.length > 1 ? 's' : ''} Due Today!
+                  {criticalTasks.some(t => t.priority === 'OVERDUE') ? '💀' : '🚨'} 
+                  {criticalTasks.some(t => t.priority === 'OVERDUE') ? ' Overdue' : ' Urgent'} Task{criticalTasks.length > 1 ? 's' : ''} Need Attention!
                 </h3>
                 <div className="mt-1">
-                  {urgentTasksToday.slice(0, 2).map((task, index) => (
+                  {criticalTasks.slice(0, 2).map((task, index) => (
                     <div key={task.id} className="flex items-center space-x-2 text-sm">
-                      <Clock className="w-3 h-3" />
+                      <span className="text-xs">
+                        {task.priority === 'OVERDUE' ? '💀' : '🚨'}
+                      </span>
                       <span className="font-medium">{task.title}</span>
                       {task.dueDate && (
                         <span className="opacity-90">
-                          • Due {format(new Date(task.dueDate), 'h:mm a')}
+                          • {task.priority === 'OVERDUE' ? 'Overdue' : `Due ${format(new Date(task.dueDate), 'h:mm a')}`}
                         </span>
                       )}
                     </div>
                   ))}
-                  {urgentTasksToday.length > 2 && (
+                  {criticalTasks.length > 2 && (
                     <div className="text-sm opacity-90 mt-1">
-                      +{urgentTasksToday.length - 2} more urgent task{urgentTasksToday.length - 2 > 1 ? 's' : ''}
+                      +{criticalTasks.length - 2} more critical task{criticalTasks.length - 2 > 1 ? 's' : ''}
                     </div>
                   )}
                 </div>
