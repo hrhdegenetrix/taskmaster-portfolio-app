@@ -47,7 +47,7 @@ const Analytics = () => {
   const [showAchievements, setShowAchievements] = useState(true)
   
   // Get the correct lifetime completed count from TaskContext (localStorage)
-  const { lifetimeCompleted, allTasks } = useTask()
+  const { lifetimeCompleted = 0, allTasks = [] } = useTask()
 
   // Fetch analytics data using consolidated endpoint
   const { data: overview, isLoading: overviewLoading } = useQuery(
@@ -89,8 +89,8 @@ const Analytics = () => {
     if (!overview?.overview) return []
     
     // Use actual localStorage lifetimeCompleted and total tasks from context
-    const lifetimeTotalTasks = allTasks.length // Current total tasks in database
-    const lifetimeCompletedTasks = lifetimeCompleted // From localStorage - true lifetime count
+    const lifetimeTotalTasks = allTasks?.length || 0 // Current total tasks in database
+    const lifetimeCompletedTasks = lifetimeCompleted || 0 // From localStorage - true lifetime count
     const lifetimeCompletionRate = lifetimeTotalTasks > 0 ? (lifetimeCompletedTasks / lifetimeTotalTasks) * 100 : 0
     const currentStreak = productivity?.streaks?.current || 0
     const longestStreak = productivity?.streaks?.longest || 0
@@ -339,17 +339,17 @@ const Analytics = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total Tasks"
-            value={allTasks.length}
+            value={allTasks?.length || 0}
             icon={CheckCircle}
             color="from-blue-500 to-blue-600"
-            subtitle={`${overview.overview.totalTasks} this ${selectedPeriod}`}
+            subtitle={`${overview.overview.totalTasks || 0} this ${selectedPeriod}`}
           />
           <StatCard
             title="Completed"
-            value={lifetimeCompleted}
+            value={lifetimeCompleted || 0}
             icon={Trophy}
             color="from-green-500 to-green-600"
-            subtitle={`${((lifetimeCompleted / Math.max(allTasks.length, 1)) * 100).toFixed(1)}% lifetime rate`}
+            subtitle={`${(((lifetimeCompleted || 0) / Math.max(allTasks?.length || 0, 1)) * 100).toFixed(1)}% lifetime rate`}
           />
           <StatCard
             title="In Progress"
@@ -501,7 +501,7 @@ const Analytics = () => {
                              <h3 className="font-bold">Motivation Level</h3>
                <p className="text-2xl font-bold">
                  {(() => {
-                   const rate = (lifetimeCompleted / Math.max(allTasks.length, 1)) * 100;
+                   const rate = ((lifetimeCompleted || 0) / Math.max(allTasks?.length || 0, 1)) * 100;
                    return rate > 80 ? 'Excellent! 🔥' : 
                           rate > 60 ? 'Great! 👍' : 
                           rate > 40 ? 'Good! 💪' : 'Keep Going! 🌱';
