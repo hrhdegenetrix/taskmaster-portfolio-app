@@ -15,7 +15,7 @@ import { format, isToday, isTomorrow, isPast } from 'date-fns'
 import TaskForm from '../components/Forms/TaskForm'
 
 const Dashboard = () => {
-  const { tasks, categories, tags, isLoading } = useTask()
+  const { tasks, categories, tags, lifetimeCompleted, isLoading } = useTask()
   const [showCreateForm, setShowCreateForm] = useState(false)
 
   // Calculate statistics
@@ -47,21 +47,21 @@ const Dashboard = () => {
       value: stats.total,
       icon: CheckSquare,
       color: 'blue',
-      change: '+12%',
+      change: `${stats.pending} active`,
     },
     {
-      title: 'Completed',
+      title: 'Current Completed',
       value: stats.completed,
       icon: TrendingUp,
       color: 'green',
-      change: `${completionRate}%`,
+      change: `${completionRate}% rate`,
     },
     {
-      title: 'Pending',
-      value: stats.pending,
-      icon: Clock,
-      color: 'yellow',
-      change: '-8%',
+      title: 'Lifetime Completed',
+      value: lifetimeCompleted,
+      icon: BarChart3,
+      color: 'purple',
+      change: 'All time! 🎉',
     },
     {
       title: 'Overdue',
@@ -78,6 +78,7 @@ const Dashboard = () => {
       green: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300',
       yellow: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
       red: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+      purple: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
     }
     return colors[color] || colors.blue
   }

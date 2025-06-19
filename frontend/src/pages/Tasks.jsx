@@ -41,6 +41,7 @@ const Tasks = () => {
     toggleTaskSelection,
     showCompleted,
     toggleShowCompleted,
+    incrementLifetimeCompleted,
     isLoading,
     invalidateQueries
   } = useTask()
@@ -97,6 +98,11 @@ const Tasks = () => {
   const handleToggleCompletion = (task) => {
     const newCompleted = !task.completed
     const newStatus = newCompleted ? 'COMPLETED' : (task.status === 'COMPLETED' ? 'PENDING' : task.status)
+    
+    // Increment lifetime completed counter when marking as completed (not when uncompleting)
+    if (newCompleted && !task.completed) {
+      incrementLifetimeCompleted()
+    }
     
     toggleCompletionMutation.mutate({
       taskId: task.id,

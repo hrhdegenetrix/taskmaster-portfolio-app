@@ -205,7 +205,7 @@ const Layout = ({ children }) => {
           </motion.div>
           
           {/* MENU Text */}
-          <div className="text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform rotate-90 my-6">
+          <div className="text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform rotate-90 my-12">
             {isSidebarOpen ? 'CLOSE' : 'MENU'}
           </div>
           

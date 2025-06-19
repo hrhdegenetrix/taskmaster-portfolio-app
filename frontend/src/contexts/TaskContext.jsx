@@ -54,6 +54,19 @@ const taskReducer = (state, action) => {
         ...state,
         showCompleted: !state.showCompleted
       }
+    case 'INCREMENT_LIFETIME_COMPLETED':
+      const newLifetimeCount = state.lifetimeCompleted + 1
+      // Save to localStorage
+      localStorage.setItem('taskmaster-lifetime-completed', newLifetimeCount.toString())
+      return {
+        ...state,
+        lifetimeCompleted: newLifetimeCount
+      }
+    case 'LOAD_LIFETIME_COMPLETED':
+      return {
+        ...state,
+        lifetimeCompleted: action.payload
+      }
     default:
       return state
   }
@@ -74,7 +87,8 @@ const initialState = {
   },
   viewMode: 'list', // 'list' | 'grid' | 'kanban'
   selectedTasks: [],
-  showCompleted: false // Hide completed tasks by default
+  showCompleted: false, // Hide completed tasks by default
+  lifetimeCompleted: 0 // Track lifetime completed tasks
 }
 
 export const TaskProvider = ({ children }) => {
@@ -147,6 +161,10 @@ export const TaskProvider = ({ children }) => {
     dispatch({ type: 'TOGGLE_SHOW_COMPLETED' })
   }
 
+  const incrementLifetimeCompleted = () => {
+    dispatch({ type: 'INCREMENT_LIFETIME_COMPLETED' })
+  }
+
   // Utility functions
   const invalidateQueries = () => {
     queryClient.invalidateQueries('tasks')
@@ -167,11 +185,19 @@ export const TaskProvider = ({ children }) => {
     return tags?.find(tag => tag.id === tagId)
   }
 
-  // Load view mode from localStorage on mount
+  // Load view mode and lifetime completed count from localStorage on mount
   useEffect(() => {
     const savedViewMode = localStorage.getItem('taskmaster-view-mode')
     if (savedViewMode && ['list', 'grid', 'kanban'].includes(savedViewMode)) {
       dispatch({ type: 'SET_VIEW_MODE', payload: savedViewMode })
+    }
+
+    const savedLifetimeCompleted = localStorage.getItem('taskmaster-lifetime-completed')
+    if (savedLifetimeCompleted) {
+      const count = parseInt(savedLifetimeCompleted, 10)
+      if (!isNaN(count)) {
+        dispatch({ type: 'LOAD_LIFETIME_COMPLETED', payload: count })
+      }
     }
   }, [])
 
@@ -190,6 +216,7 @@ export const TaskProvider = ({ children }) => {
     viewMode: state.viewMode,
     selectedTasks: state.selectedTasks,
     showCompleted: state.showCompleted,
+    lifetimeCompleted: state.lifetimeCompleted,
 
     // Data
     tasks: filteredTasks,
@@ -215,6 +242,7 @@ export const TaskProvider = ({ children }) => {
     selectAllTasks,
     clearSelection,
     toggleShowCompleted,
+    incrementLifetimeCompleted,
     invalidateQueries,
 
     // Utility functions
