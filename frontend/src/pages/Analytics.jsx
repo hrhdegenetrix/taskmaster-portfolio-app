@@ -216,16 +216,36 @@ const Analytics = () => {
 
   const unlockedCount = achievements.filter(a => a.unlocked).length
 
+  // Track if this is the initial load
+  const [isInitialLoad, setIsInitialLoad] = React.useState(true)
+
   // Check for newly unlocked achievements and show notifications
   React.useEffect(() => {
+    // Skip if achievements haven't loaded yet
+    if (!achievements || achievements.length === 0) return
+    
     const currentlyUnlocked = new Set(achievements.filter(a => a.unlocked).map(a => a.id))
     
-    // Find newly unlocked achievements (only show notifications for truly new ones)
+    // On initial load, just save current state without showing notifications
+    if (isInitialLoad) {
+      setPreviouslyUnlocked(currentlyUnlocked)
+      setIsInitialLoad(false)
+      
+      // Save to localStorage for persistence
+      try {
+        localStorage.setItem('taskmaster-unlocked-achievements', JSON.stringify([...currentlyUnlocked]))
+      } catch (error) {
+        console.warn('Could not save unlocked achievements to localStorage:', error)
+      }
+      return
+    }
+    
+    // Find truly newly unlocked achievements (only during current session)
     const newlyUnlocked = achievements.filter(a => 
       a.unlocked && !previouslyUnlocked.has(a.id)
     )
     
-    // Only show notifications if there are genuinely new achievements
+    // Show notifications only for achievements unlocked during current session
     if (newlyUnlocked.length > 0) {
       newlyUnlocked.forEach(achievement => {
         toast.success(
@@ -248,25 +268,16 @@ const Analytics = () => {
       })
       
       // Update and persist the unlocked achievements
-      const newUnlockedSet = new Set(currentlyUnlocked)
-      setPreviouslyUnlocked(newUnlockedSet)
+      setPreviouslyUnlocked(currentlyUnlocked)
       
       // Save to localStorage for persistence
-      try {
-        localStorage.setItem('taskmaster-unlocked-achievements', JSON.stringify([...newUnlockedSet]))
-      } catch (error) {
-        console.warn('Could not save unlocked achievements to localStorage:', error)
-      }
-    } else if (previouslyUnlocked.size === 0 && currentlyUnlocked.size > 0) {
-      // First time loading - just save current unlocked achievements without showing notifications
-      setPreviouslyUnlocked(currentlyUnlocked)
       try {
         localStorage.setItem('taskmaster-unlocked-achievements', JSON.stringify([...currentlyUnlocked]))
       } catch (error) {
         console.warn('Could not save unlocked achievements to localStorage:', error)
       }
     }
-  }, [achievements, previouslyUnlocked])
+  }, [achievements, previouslyUnlocked, isInitialLoad])
 
   // Invalidate analytics cache when tasks or lifetime counts change
   React.useEffect(() => {

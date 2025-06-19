@@ -259,14 +259,36 @@ router.put('/:id', async (req, res) => {
         updateData.dueDate = null;
       }
     }
+    // Handle completed status changes intelligently
     if (completed !== undefined) {
       updateData.completed = completed;
       if (completed && !existingTask.completed) {
         updateData.completedAt = new Date();
-        updateData.status = 'COMPLETED';
+        // Only set status to COMPLETED if no explicit status was provided
+        if (status === undefined) {
+          updateData.status = 'COMPLETED';
+        }
       } else if (!completed && existingTask.completed) {
         updateData.completedAt = null;
-        updateData.status = 'PENDING';
+        // Only set status to PENDING if no explicit status was provided
+        if (status === undefined) {
+          updateData.status = 'PENDING';
+        }
+      }
+    }
+    
+    // Ensure status and completed fields are consistent
+    if (status !== undefined) {
+      const newStatus = status.toUpperCase();
+      if (newStatus === 'COMPLETED') {
+        updateData.completed = true;
+        updateData.completedAt = new Date();
+      } else if (completed === undefined) {
+        // Only update completed if it wasn't explicitly set
+        if (newStatus === 'PENDING' || newStatus === 'IN_PROGRESS' || newStatus === 'CANCELLED') {
+          updateData.completed = false;
+          updateData.completedAt = null;
+        }
       }
     }
     if (categoryId !== undefined) updateData.categoryId = categoryId;
@@ -337,7 +359,16 @@ router.put('/:id', async (req, res) => {
     res.json(transformedTask);
   } catch (error) {
     console.error('Error updating task:', error);
-    res.status(500).json({ error: 'Failed to update task' });
+    console.error('Request body:', req.body);
+    console.error('Task ID:', req.params.id);
+    console.error('Full error:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Send more specific error information
+    res.status(500).json({ 
+      error: 'Failed to update task',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
