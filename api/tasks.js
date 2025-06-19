@@ -124,12 +124,32 @@ module.exports = async (req, res) => {
         const paginatedTasks = sortedTasks.slice(skip, skip + limitNum);
 
         // Debug logging
-        console.log('First 5 tasks with completion status (after sorting):', 
-          paginatedTasks.slice(0, 5).map(t => ({
+        console.log('\n🔍 TASK SORTING DEBUG:')
+        console.log('📊 Sort request:', { sortBy, sortOrder })
+        console.log('📋 Total tasks before sorting:', allTasks.length)
+        console.log('✅ Completed tasks:', allTasks.filter(t => t.completed).length)
+        console.log('⭐ First 3 tasks BEFORE sorting:', 
+          allTasks.slice(0, 3).map(t => ({
             title: t.title,
             completed: t.completed,
             priority: t.priority,
-            dueDate: t.dueDate
+            dueDate: t.dueDate ? new Date(t.dueDate).toISOString() : 'null'
+          }))
+        )
+        console.log('🎯 First 3 tasks AFTER sorting:', 
+          sortedTasks.slice(0, 3).map(t => ({
+            title: t.title,
+            completed: t.completed,
+            priority: t.priority,
+            dueDate: t.dueDate ? new Date(t.dueDate).toISOString() : 'null'
+          }))
+        )
+        console.log('📄 Paginated result (first 3):', 
+          paginatedTasks.slice(0, 3).map(t => ({
+            title: t.title,
+            completed: t.completed,
+            priority: t.priority,
+            dueDate: t.dueDate ? new Date(t.dueDate).toISOString() : 'null'
           }))
         )
 

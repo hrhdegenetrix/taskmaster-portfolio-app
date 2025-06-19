@@ -89,8 +89,10 @@ export const TaskProvider = ({ children }) => {
       sortOrder: state.sort.order
     }),
     {
-      keepPreviousData: true,
-      staleTime: 30000, // 30 seconds
+      keepPreviousData: false, // Don't keep previous data to force fresh sorting
+      staleTime: 0, // Always fetch fresh data for tasks
+      cacheTime: 5000, // Keep in cache for just 5 seconds
+      refetchOnMount: 'always', // Always refetch when component mounts
     }
   )
 
@@ -139,6 +141,8 @@ export const TaskProvider = ({ children }) => {
 
   // Utility functions
   const invalidateQueries = () => {
+    // Clear task cache completely to force fresh sorting on next request
+    queryClient.removeQueries('tasks')
     queryClient.invalidateQueries('tasks')
     queryClient.invalidateQueries('categories')
     queryClient.invalidateQueries('tags')
