@@ -86,21 +86,24 @@ module.exports = async (req, res) => {
           prisma.task.count({ where })
         ]);
 
-        // Transform tasks to include tags properly and mark overdue
+        // Transform tasks to include tags properly and add overdue status
         const now = new Date();
         const transformedTasks = tasks.map(task => {
-          let finalTask = {
+          const finalTask = {
             ...task,
             tags: task.tags.map(taskTag => taskTag.tag)
           };
 
-          // Check if task is overdue and not completed
-          if (task.dueDate && !task.completed && new Date(task.dueDate) < now) {
-            // Mark as overdue if not already overdue
-            if (task.priority !== 'OVERDUE') {
-              finalTask.priority = 'OVERDUE';
-              finalTask.isAutoOverdue = true; // Flag to indicate auto-assignment
-            }
+          // Add overdue flag for frontend use (don't modify the actual priority)
+          if (task.dueDate && !task.completed) {
+            const dueDate = new Date(task.dueDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            dueDate.setHours(0, 0, 0, 0);
+            
+            finalTask.isOverdue = dueDate < today;
+          } else {
+            finalTask.isOverdue = false;
           }
 
           return finalTask;
