@@ -28,6 +28,7 @@ import toast from 'react-hot-toast'
 const Tasks = () => {
   const {
     tasks,
+    allTasks,
     categories,
     tags,
     filters,
@@ -38,6 +39,8 @@ const Tasks = () => {
     setViewMode,
     selectedTasks,
     toggleTaskSelection,
+    showCompleted,
+    toggleShowCompleted,
     isLoading,
     invalidateQueries
   } = useTask()
@@ -305,9 +308,29 @@ const Tasks = () => {
           </div>
         </div>
 
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          <span className="font-medium">{tasks.length}</span> tasks total •{' '}
-          <span className="font-medium text-green-600">{tasks.filter(t => t.completed).length}</span> completed 🎉
+        <div className="flex items-center space-x-4">
+          {/* Show Completed Toggle */}
+          <label className="flex items-center space-x-2 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={showCompleted}
+              onChange={toggleShowCompleted}
+              className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2 transition-all duration-200"
+            />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary-600 transition-colors duration-200">
+              Show completed tasks ✅
+            </span>
+            {!showCompleted && allTasks.filter(t => t.completed).length > 0 && (
+              <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full font-medium">
+                {allTasks.filter(t => t.completed).length} hidden
+              </span>
+            )}
+          </label>
+
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="font-medium">{showCompleted ? allTasks.length : tasks.length}</span> tasks shown •{' '}
+            <span className="font-medium text-green-600">{allTasks.filter(t => t.completed).length}</span> completed 🎉
+          </div>
         </div>
       </div>
 

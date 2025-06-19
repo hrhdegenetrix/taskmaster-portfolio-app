@@ -11,8 +11,7 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
-      staleTime: 30 * 1000, // 30 seconds - shorter for dynamic task data
-      cacheTime: 60 * 1000, // 1 minute cache time
+      staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
 })

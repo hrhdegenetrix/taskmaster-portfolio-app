@@ -49,6 +49,11 @@ const taskReducer = (state, action) => {
         ...state,
         selectedTasks: []
       }
+    case 'TOGGLE_SHOW_COMPLETED':
+      return {
+        ...state,
+        showCompleted: !state.showCompleted
+      }
     default:
       return state
   }
@@ -68,7 +73,8 @@ const initialState = {
     order: 'asc'
   },
   viewMode: 'list', // 'list' | 'grid' | 'kanban'
-  selectedTasks: []
+  selectedTasks: [],
+  showCompleted: false // Hide completed tasks by default
 }
 
 export const TaskProvider = ({ children }) => {
@@ -89,10 +95,8 @@ export const TaskProvider = ({ children }) => {
       sortOrder: state.sort.order
     }),
     {
-      keepPreviousData: false, // Don't keep previous data to force fresh sorting
-      staleTime: 0, // Always fetch fresh data for tasks
-      cacheTime: 5000, // Keep in cache for just 5 seconds
-      refetchOnMount: 'always', // Always refetch when component mounts
+      keepPreviousData: true,
+      staleTime: 30000, // 30 seconds
     }
   )
 
@@ -139,10 +143,12 @@ export const TaskProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_SELECTIONS' })
   }
 
+  const toggleShowCompleted = () => {
+    dispatch({ type: 'TOGGLE_SHOW_COMPLETED' })
+  }
+
   // Utility functions
   const invalidateQueries = () => {
-    // Clear task cache completely to force fresh sorting on next request
-    queryClient.removeQueries('tasks')
     queryClient.invalidateQueries('tasks')
     queryClient.invalidateQueries('categories')
     queryClient.invalidateQueries('tags')
@@ -169,15 +175,25 @@ export const TaskProvider = ({ children }) => {
     }
   }, [])
 
+  // Filter tasks based on showCompleted toggle
+  const filteredTasks = (tasksData?.tasks || []).filter(task => {
+    if (!state.showCompleted && task.completed) {
+      return false // Hide completed tasks when showCompleted is false
+    }
+    return true
+  })
+
   const value = {
     // State
     filters: state.filters,
     sort: state.sort,
     viewMode: state.viewMode,
     selectedTasks: state.selectedTasks,
+    showCompleted: state.showCompleted,
 
     // Data
-    tasks: tasksData?.tasks || [],
+    tasks: filteredTasks,
+    allTasks: tasksData?.tasks || [], // Keep unfiltered tasks for stats
     pagination: tasksData?.pagination,
     categories: categories || [],
     tags: tags || [],
@@ -198,6 +214,7 @@ export const TaskProvider = ({ children }) => {
     toggleTaskSelection,
     selectAllTasks,
     clearSelection,
+    toggleShowCompleted,
     invalidateQueries,
 
     // Utility functions
