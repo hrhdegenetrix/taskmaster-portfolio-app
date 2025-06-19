@@ -83,6 +83,8 @@ const Tasks = () => {
   const deleteAllCompletedMutation = useMutation(
     async () => {
       const completedTasks = allTasks.filter(t => t.completed)
+      // Note: We don't decrement lifetime completed count when deleting tasks
+      // Lifetime count only tracks total completions, not current state
       await Promise.all(completedTasks.map(task => taskService.deleteTask(task.id)))
     },
     {

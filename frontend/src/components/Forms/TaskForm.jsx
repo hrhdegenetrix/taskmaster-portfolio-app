@@ -296,35 +296,28 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     }))
   }
 
-  // Remove tag from selection
-  const removeTag = (tagId, event) => {
-    console.log('removeTag called with:', tagId, event) // Debug log
+  // Remove tag from selection with proper state management
+  const removeTag = React.useCallback((tagId, event) => {
+    console.log('🏷️ removeTag called with:', tagId) // Debug log
     if (event) {
-      event.stopPropagation() // Prevent the toggle when clicking X
+      event.stopPropagation()
       event.preventDefault()
     }
-    console.log('Current selectedTags before removal:', formData.selectedTags) // Debug log
     
-    // Force a complete re-render by using a callback and forcing a new render
-    setFormData(prev => {
-      const newSelectedTags = prev.selectedTags.filter(id => id !== tagId)
-      console.log('New selectedTags after removal:', newSelectedTags) // Debug log
+    console.log('🔍 Current selectedTags before removal:', formData.selectedTags) // Debug log
+    
+    // Update state immediately and force component re-render
+    setFormData(currentData => {
+      const updatedTags = currentData.selectedTags.filter(id => id !== tagId)
+      console.log('✅ New selectedTags after removal:', updatedTags) // Debug log
       
-      // Return a completely new object to force re-render
-      const newFormData = {
-        ...prev,
-        selectedTags: newSelectedTags, // Don't spread - just assign directly
-        _tagUpdateId: Date.now() // Force change detection
+      return {
+        ...currentData,
+        selectedTags: updatedTags,
+        _forceUpdateKey: Math.random() // Force re-render with random key
       }
-      
-      // Force a re-render on next tick
-      setTimeout(() => {
-        console.log('Forced re-render - selectedTags now:', newFormData.selectedTags)
-      }, 0)
-      
-      return newFormData
     })
-  }
+  }, [formData.selectedTags])
 
   // Create new tag(s) - supports comma separation
   const handleCreateTag = () => {
@@ -631,18 +624,16 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
               <div className="flex flex-wrap gap-2 mb-3">
                 {tags.map(tag => {
                   const isSelected = formData.selectedTags.includes(tag.id)
-                  console.log(`Tag ${tag.name} (${tag.id}): selected = ${isSelected}`) // Debug log
+                  console.log(`🏷️ Tag ${tag.name} (${tag.id}): selected = ${isSelected}`) // Debug log
                   return (
-                    <div key={`${tag.id}-${formData._tagUpdateId || 0}`} className="relative">
+                    <div key={`tag-${tag.id}-${isSelected}-${formData._forceUpdateKey || 0}`} className="relative">
                       {isSelected ? (
                         <div className="flex items-center bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105">
                           <span className="mr-2">{tag.name}</span>
                           <button
                             type="button"
                             onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              console.log(`Removing tag: ${tag.name} (${tag.id})`) // Debug log
+                              console.log(`🗑️ Removing tag: ${tag.name} (${tag.id})`) // Debug log
                               removeTag(tag.id, e)
                             }}
                             className="w-4 h-4 flex items-center justify-center text-white hover:text-red-200 hover:bg-white hover:bg-opacity-20 rounded-full transition-all duration-200 ml-1"
@@ -655,7 +646,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                         <button
                           type="button"
                           onClick={() => {
-                            console.log(`Adding tag: ${tag.name} (${tag.id})`) // Debug log
+                            console.log(`➕ Adding tag: ${tag.name} (${tag.id})`) // Debug log
                             toggleTag(tag.id)
                           }}
                           className="bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105"

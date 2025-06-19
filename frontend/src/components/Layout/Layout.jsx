@@ -180,55 +180,61 @@ const Layout = ({ children }) => {
         <button
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
-          className={`bg-gradient-to-br from-primary-500 via-accent-500 to-fun-500 text-white w-3.5 h-64 rounded-r-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center space-y-1 group touch-manipulation ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          className={`bg-gradient-to-br from-primary-500 via-accent-500 to-fun-500 text-white w-3.5 h-64 rounded-r-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-between group touch-manipulation ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
           title={isSidebarOpen ? "Close menu" : "Open menu (click or drag to toggle)"}
         >
           {/* Top Arrow */}
-          <motion.div
-            animate={{ rotate: isSidebarOpen ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col items-center mb-4"
-          >
-            <svg 
-              className="w-2.5 h-2.5" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
+          <div className="flex-1 flex items-center justify-center">
+            <motion.div
+              animate={{ rotate: isSidebarOpen ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center justify-center"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={3} 
-                d={isSidebarOpen ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} 
-              />
-            </svg>
-          </motion.div>
+              <svg 
+                className="w-2.5 h-2.5" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={3} 
+                  d={isSidebarOpen ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} 
+                />
+              </svg>
+            </motion.div>
+          </div>
           
-          {/* MENU Text */}
-          <div className="text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform rotate-90 my-16">
-            {isSidebarOpen ? 'CLOSE' : 'MENU'}
+          {/* MENU Text - Centered */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform rotate-90">
+              {isSidebarOpen ? 'CLOSE' : 'MENU'}
+            </div>
           </div>
           
           {/* Bottom Arrow */}
-          <motion.div
-            animate={{ rotate: isSidebarOpen ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col items-center mt-4"
-          >
-            <svg 
-              className="w-2.5 h-2.5" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
+          <div className="flex-1 flex items-center justify-center">
+            <motion.div
+              animate={{ rotate: isSidebarOpen ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center justify-center"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={3} 
-                d={isSidebarOpen ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} 
-              />
-            </svg>
-          </motion.div>
+              <svg 
+                className="w-2.5 h-2.5" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={3} 
+                  d={isSidebarOpen ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} 
+                />
+              </svg>
+            </motion.div>
+          </div>
         </button>
       </motion.div>
 
