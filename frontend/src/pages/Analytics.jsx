@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from 'react-query'
 import { 
@@ -306,7 +306,11 @@ const Analytics = () => {
     )
   }
 
-  const achievements = getAchievements()
+  // Memoize achievements to prevent infinite re-renders
+  const achievements = useMemo(() => {
+    return getAchievements()
+  }, [lifetimeCompleted, lifetimeTotal, productivity?.streaks?.current, productivity?.streaks?.longest])
+  
   const unlockedCount = achievements.filter(a => a.unlocked).length
 
   // Check for newly unlocked achievements and show notifications
