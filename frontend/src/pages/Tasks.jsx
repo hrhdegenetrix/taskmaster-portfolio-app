@@ -21,6 +21,7 @@ import { useTask } from '../contexts/TaskContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { format, isToday, isTomorrow, isPast } from 'date-fns'
 import TaskForm from '../components/Forms/TaskForm'
+import ConfirmModal from '../components/Layout/ConfirmModal'
 import { taskService } from '../services/api'
 import { useMutation } from 'react-query'
 import toast from 'react-hot-toast'
@@ -51,6 +52,14 @@ const Tasks = () => {
 
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
+  
+  // Confirmation modal states
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: null,
+    task: null,
+    onConfirm: null
+  })
 
   // Toggle task completion mutation
   const toggleCompletionMutation = useMutation(
@@ -64,7 +73,14 @@ const Tasks = () => {
         toast.success('Task updated! 🎉')
         invalidateQueries()
       },
-      onError: () => toast.error('Failed to update task 😕')
+      onError: (error) => {
+        // Check if it's an overdue task error
+        if (error?.response?.data?.code === 'TASK_OVERDUE') {
+          toast.error(error.response.data.error)
+        } else {
+          toast.error('Failed to update task 😕')
+        }
+      }
     }
   )
 
@@ -116,9 +132,15 @@ const Tasks = () => {
 
   // Handle task deletion with confirmation
   const handleDeleteTask = (task) => {
-    if (window.confirm(`Are you sure you want to delete "${task.title}"? This can't be undone! 🗑️`)) {
-      deleteTaskMutation.mutate(task.id)
-    }
+    setConfirmModal({
+      isOpen: true,
+      type: 'deleteTask',
+      task,
+      onConfirm: () => {
+        deleteTaskMutation.mutate(task.id)
+        setConfirmModal({ isOpen: false, type: null, task: null, onConfirm: null })
+      }
+    })
   }
 
   // Handle delete all completed tasks
@@ -126,9 +148,20 @@ const Tasks = () => {
     const completedCount = allTasks.filter(t => t.completed).length
     if (completedCount === 0) return
     
-    if (window.confirm(`Are you sure you want to delete all ${completedCount} completed tasks? This can't be undone! 🧹`)) {
-      deleteAllCompletedMutation.mutate()
-    }
+    setConfirmModal({
+      isOpen: true,
+      type: 'deleteAllCompleted',
+      task: null,
+      onConfirm: () => {
+        deleteAllCompletedMutation.mutate()
+        setConfirmModal({ isOpen: false, type: null, task: null, onConfirm: null })
+      }
+    })
+  }
+
+  // Close confirmation modal
+  const closeConfirmModal = () => {
+    setConfirmModal({ isOpen: false, type: null, task: null, onConfirm: null })
   }
 
   // Priority colors (dark mode optimized)
@@ -462,6 +495,42 @@ const Tasks = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={confirmModal.onConfirm}
+        title={
+          confirmModal.type === 'deleteTask' 
+            ? 'Delete Task'
+            : confirmModal.type === 'deleteAllCompleted'
+            ? 'Delete All Completed Tasks'
+            : 'Confirm Action'
+        }
+        message={
+          confirmModal.type === 'deleteTask' && confirmModal.task
+            ? `Are you sure you want to delete "${confirmModal.task.title}"? This can't be undone! 🗑️`
+            : confirmModal.type === 'deleteAllCompleted'
+            ? `Are you sure you want to delete all ${allTasks.filter(t => t.completed).length} completed tasks? This can't be undone! 🧹`
+            : 'Are you sure you want to perform this action?'
+        }
+        confirmText={
+          confirmModal.type === 'deleteTask' 
+            ? 'Delete Task'
+            : confirmModal.type === 'deleteAllCompleted'
+            ? 'Delete All'
+            : 'Confirm'
+        }
+        type="danger"
+        isLoading={
+          confirmModal.type === 'deleteTask' 
+            ? deleteTaskMutation.isLoading
+            : confirmModal.type === 'deleteAllCompleted'
+            ? deleteAllCompletedMutation.isLoading
+            : false
+        }
+      />
     </div>
   )
 }

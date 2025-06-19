@@ -241,6 +241,20 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
+    // Check if task is overdue and prevent status changes (except to COMPLETED)
+    if (status !== undefined && existingTask.dueDate && !existingTask.completed) {
+      const now = new Date();
+      const dueDate = new Date(existingTask.dueDate);
+      const isOverdue = dueDate < now;
+      
+      if (isOverdue && status.toUpperCase() !== 'COMPLETED') {
+        return res.status(400).json({ 
+          error: "Can't change the status of an overdue task. Try changing the due date first!",
+          code: 'TASK_OVERDUE'
+        });
+      }
+    }
+
     // Prepare update data
     const updateData = {};
     if (title !== undefined) updateData.title = title.trim();
