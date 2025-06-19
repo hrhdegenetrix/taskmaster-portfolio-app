@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   X,
@@ -21,6 +21,102 @@ import { useTask } from '../../contexts/TaskContext'
 import { taskService, uploadService } from '../../services/api'
 import { useMutation, useQueryClient } from 'react-query'
 import toast from 'react-hot-toast'
+
+// Custom Time Dropdown Component
+const TimeDropdown = ({ value, onChange, disabled }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef(null)
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+  
+  // Generate time options (every 15 minutes)
+  const timeOptions = []
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const hour = h.toString().padStart(2, '0')
+      const minute = m.toString().padStart(2, '0')
+      const time24 = `${hour}:${minute}`
+      const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+      const ampm = h < 12 ? 'AM' : 'PM'
+      const time12 = `${hour12}:${minute} ${ampm}`
+      
+      timeOptions.push({
+        value: time24,
+        label: time12,
+        display: time24
+      })
+    }
+  }
+
+  const selectedOption = timeOptions.find(opt => opt.value === value)
+  
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`w-full px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 text-left flex items-center justify-between ${
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600'
+        }`}
+      >
+        <span className={value ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
+          {selectedOption ? selectedOption.label : 'Select time...'}
+        </span>
+        <div className="flex items-center space-x-2">
+          <Clock className="w-4 h-4 text-gray-400" />
+          <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
+      
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+          <div className="p-2">
+            <button
+              type="button"
+              onClick={() => {
+                onChange('')
+                setIsOpen(false)
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              No specific time
+            </button>
+            {timeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value)
+                  setIsOpen(false)
+                }}
+                className={`w-full px-3 py-2 text-left text-sm rounded-lg transition-colors ${
+                  value === option.value
+                    ? 'bg-primary-500 text-white'
+                    : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const TaskForm = ({ task = null, onClose, categories, tags }) => {
   const { invalidateQueries } = useTask()
@@ -404,20 +500,11 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                   onChange={(e) => handleChange('dueDate', e.target.value)}
                   className="px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
                 />
-                <div className="relative">
-                  <input
-                    type="time"
-                    value={formData.dueTime}
-                    onChange={(e) => handleChange('dueTime', e.target.value)}
-                    className="w-full px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
-                    disabled={!formData.dueDate}
-                    title="Click to open time picker or type HH:MM format (e.g., 14:30 for 2:30 PM)"
-                    placeholder="HH:MM"
-                  />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                  </div>
-                </div>
+                <TimeDropdown
+                  value={formData.dueTime}
+                  onChange={(time) => handleChange('dueTime', time)}
+                  disabled={!formData.dueDate}
+                />
               </div>
               <div className="flex items-start space-x-2 mt-2">
                 <p className="text-gray-500 text-xs">
@@ -481,14 +568,20 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
               <div className="flex flex-wrap gap-2 mb-3">
                 {tags.map(tag => {
                   const isSelected = formData.selectedTags.includes(tag.id)
+                  console.log(`Tag ${tag.name} (${tag.id}): selected = ${isSelected}`) // Debug log
                   return (
-                    <div key={tag.id} className="relative">
+                    <div key={`${tag.id}-${isSelected}`} className="relative">
                       {isSelected ? (
                         <div className="group bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 cursor-default">
                           <span className="mr-6">{tag.name}</span>
                           <button
                             type="button"
-                            onClick={() => removeTag(tag.id)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              console.log(`Removing tag: ${tag.name} (${tag.id})`) // Debug log
+                              removeTag(tag.id)
+                            }}
                             className="absolute right-1 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-white hover:text-red-200 hover:bg-white hover:bg-opacity-20 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200"
                             title="Remove tag"
                           >
@@ -498,7 +591,10 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                       ) : (
                         <button
                           type="button"
-                          onClick={() => toggleTag(tag.id)}
+                          onClick={() => {
+                            console.log(`Adding tag: ${tag.name} (${tag.id})`) // Debug log
+                            toggleTag(tag.id)
+                          }}
                           className="bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105"
                         >
                           {tag.name}

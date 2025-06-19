@@ -49,6 +49,7 @@ module.exports = async (req, res) => {
         const orderBy = [];
         
         // Always put completed tasks at the end, but allow sorting within groups
+        // false (uncompleted) comes before true (completed) with 'asc'
         orderBy.push({ completed: 'asc' });
         
         // Add the requested sort
@@ -108,6 +109,15 @@ module.exports = async (req, res) => {
 
           return finalTask;
         });
+
+        // Debug logging
+        console.log('First 5 tasks with completion status:', 
+          transformedTasks.slice(0, 5).map(t => ({
+            title: t.title,
+            completed: t.completed,
+            priority: t.priority
+          }))
+        )
 
         res.status(200).json({
           tasks: transformedTasks,

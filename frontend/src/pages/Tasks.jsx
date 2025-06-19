@@ -105,11 +105,11 @@ const Tasks = () => {
     }
     
     const darkColors = {
-      OVERDUE: 'from-red-800 to-red-900',
-      URGENT: 'from-red-600 to-red-700',
-      HIGH: 'from-orange-600 to-orange-700',
-      MEDIUM: 'from-blue-600 to-blue-700',
-      LOW: 'from-green-600 to-green-700'
+      OVERDUE: 'from-red-900 to-red-950',
+      URGENT: 'from-red-700 to-red-800',
+      HIGH: 'from-orange-700 to-orange-800',
+      MEDIUM: 'from-blue-700 to-blue-800',
+      LOW: 'from-green-700 to-green-800'
     }
     
     const colors = isDarkMode ? darkColors : lightColors
@@ -467,9 +467,9 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           {category && (
-            <div className="flex items-center space-x-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-xs">
+            <div className="flex items-center space-x-1 px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded-lg text-xs">
               <span>{category.icon}</span>
-              <span className="font-medium">{category.name}</span>
+              <span className="font-medium text-gray-700 dark:text-gray-200">{category.name}</span>
             </div>
           )}
           
