@@ -11,10 +11,10 @@ const UrgentTaskAlert = () => {
 
   // Find urgent and overdue tasks
   const criticalTasks = tasks.filter(task => 
-    (task.priority === 'URGENT' || task.isOverdue) && 
+    (task.priority === 'URGENT' || task.priority === 'OVERDUE') && 
     task.dueDate && 
     !task.completed &&
-    (task.isOverdue || isToday(new Date(task.dueDate)))
+    (task.priority === 'OVERDUE' || isToday(new Date(task.dueDate)))
   )
 
   // Don't show if no critical tasks or dismissed
@@ -38,19 +38,19 @@ const UrgentTaskAlert = () => {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold flex items-center">
-                  {criticalTasks.some(t => t.isOverdue) ? '💀' : '🚨'} 
-                  {criticalTasks.some(t => t.isOverdue) ? ' Overdue' : ' Urgent'} Task{criticalTasks.length > 1 ? 's' : ''} Need Attention!
+                  {criticalTasks.some(t => t.priority === 'OVERDUE') ? '💀' : '🚨'} 
+                  {criticalTasks.some(t => t.priority === 'OVERDUE') ? ' Overdue' : ' Urgent'} Task{criticalTasks.length > 1 ? 's' : ''} Need Attention!
                 </h3>
                 <div className="mt-1">
                   {criticalTasks.slice(0, 2).map((task, index) => (
                     <div key={task.id} className="flex items-center space-x-2 text-sm">
                       <span className="text-xs">
-                        {task.isOverdue ? '💀' : '🚨'}
+                        {task.priority === 'OVERDUE' ? '💀' : '🚨'}
                       </span>
                       <span className="font-medium">{task.title}</span>
                       {task.dueDate && (
                         <span className="opacity-90">
-                          • {task.isOverdue ? 'Overdue' : `Due ${format(new Date(task.dueDate), 'h:mm a')}`}
+                          • {task.priority === 'OVERDUE' ? 'Overdue' : `Due ${format(new Date(task.dueDate), 'h:mm a')}`}
                         </span>
                       )}
                     </div>
