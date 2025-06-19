@@ -57,12 +57,6 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirm
           
           <div className="flex space-x-3">
             <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-500 transition-all duration-200 font-medium"
-            >
-              {cancelText}
-            </button>
-            <button
               onClick={onConfirm}
               className={`flex-1 px-4 py-2 text-white rounded-xl transition-all duration-200 font-medium ${
                 isDangerous 
@@ -71,6 +65,12 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirm
               }`}
             >
               {confirmText}
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-500 transition-all duration-200 font-medium"
+            >
+              {cancelText}
             </button>
           </div>
         </motion.div>
@@ -348,14 +348,39 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
   const deleteTagMutation = useMutation(
     (tagId) => taskService.deleteTag(tagId),
     {
-      onSuccess: (deletedTag, tagId) => {
+      onSuccess: async (deletedTag, tagId) => {
         toast.success(`Tag deleted! 🗑️`)
-        queryClient.invalidateQueries('tags')
+        
         // Remove the deleted tag from selected tags if it was selected
         setFormData(prev => ({
           ...prev,
           selectedTags: prev.selectedTags.filter(id => id !== tagId)
         }))
+        
+        // Aggressive cache invalidation and refetching
+        await Promise.all([
+          queryClient.invalidateQueries('tags'),
+          queryClient.invalidateQueries('tasks'),
+          queryClient.invalidateQueries('categories'),
+          // Force immediate refetch of all tasks to update counts
+          queryClient.refetchQueries('tasks', { active: true }),
+        ])
+        
+        // If we're editing an existing task, refetch its data specifically
+        if (isEditing && task?.id) {
+          try {
+            const updatedTask = await taskService.getTask(task.id)
+            console.log('🔄 Refreshed current task data after tag deletion')
+            
+            // Update form data with fresh task data (this should show correct tag count)
+            setFormData(prev => ({
+              ...prev,
+              selectedTags: updatedTask.tags?.map(t => t.id) || []
+            }))
+          } catch (error) {
+            console.warn('Could not refresh current task data:', error)
+          }
+        }
       },
       onError: (error) => {
         toast.error('Failed to delete tag 😕')
@@ -557,6 +582,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}

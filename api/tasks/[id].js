@@ -124,18 +124,32 @@ module.exports = async (req, res) => {
             where: { taskId: id }
           });
 
-          // Add new tags
+          // Add new tags, but first validate they exist
           if (tags.length > 0) {
-            await Promise.all(
-              tags.map(tagId =>
-                prisma.taskTag.create({
-                  data: {
-                    taskId: id,
-                    tagId
-                  }
-                })
-              )
-            );
+            // Filter out any non-existent tag IDs to prevent phantom tag errors
+            const existingTags = await prisma.tag.findMany({
+              where: {
+                id: {
+                  in: tags
+                }
+              }
+            });
+            
+            const validTagIds = existingTags.map(tag => tag.id);
+            console.log(`🔍 Filtering tags: ${tags.length} requested, ${validTagIds.length} valid`);
+            
+            if (validTagIds.length > 0) {
+              await Promise.all(
+                validTagIds.map(tagId =>
+                  prisma.taskTag.create({
+                    data: {
+                      taskId: id,
+                      tagId
+                    }
+                  })
+                )
+              );
+            }
           }
 
           // Fetch updated task with new tags
