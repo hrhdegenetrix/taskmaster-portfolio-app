@@ -25,7 +25,14 @@ import toast from 'react-hot-toast'
 // Custom Time Dropdown Component
 const TimeDropdown = ({ value, onChange, disabled }) => {
   const [isOpen, setIsOpen] = useState(false)
+  const [inputValue, setInputValue] = useState(value || '')
   const dropdownRef = useRef(null)
+  const inputRef = useRef(null)
+  
+  // Update input value when prop changes
+  useEffect(() => {
+    setInputValue(value || '')
+  }, [value])
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -38,6 +45,42 @@ const TimeDropdown = ({ value, onChange, disabled }) => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+  
+  // Validate and format time input
+  const handleInputChange = (e) => {
+    const input = e.target.value
+    setInputValue(input)
+    
+    // Basic time validation (HH:MM format)
+    const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/
+    if (timeRegex.test(input)) {
+      onChange(input)
+    } else if (input === '') {
+      onChange('')
+    }
+  }
+  
+  // Handle input blur to format the time
+  const handleInputBlur = () => {
+    if (inputValue) {
+      // Try to parse and reformat the input
+      const timeRegex = /^(\d{1,2}):?(\d{0,2})$/
+      const match = inputValue.match(timeRegex)
+      
+      if (match) {
+        let [, hours, minutes] = match
+        hours = parseInt(hours)
+        minutes = minutes ? parseInt(minutes) : 0
+        
+        // Validate ranges
+        if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+          const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+          setInputValue(formattedTime)
+          onChange(formattedTime)
+        }
+      }
+    }
+  }
   
   // Generate time options (every 15 minutes)
   const timeOptions = []
@@ -62,24 +105,35 @@ const TimeDropdown = ({ value, onChange, disabled }) => {
   
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={`w-full px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 text-left flex items-center justify-between ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600'
-        }`}
-      >
-        <span className={value ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-          {selectedOption ? selectedOption.label : 'Select time...'}
-        </span>
-        <div className="flex items-center space-x-2">
-          <Clock className="w-4 h-4 text-gray-400" />
-          <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </button>
+      <div className="flex">
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onBlur={handleInputBlur}
+          placeholder="HH:MM or select..."
+          disabled={disabled}
+          className={`flex-1 px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-l-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 ${
+            disabled ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        />
+        <button
+          type="button"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          disabled={disabled}
+          className={`px-3 py-3 border-2 border-l-0 border-gray-200 dark:border-gray-600 rounded-r-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 ${
+            disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600'
+          }`}
+        >
+          <div className="flex items-center space-x-2">
+            <Clock className="w-4 h-4 text-gray-400" />
+            <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </button>
+      </div>
       
       {isOpen && !disabled && (
         <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg max-h-48 overflow-y-auto">
@@ -250,12 +304,17 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       event.preventDefault()
     }
     console.log('Current selectedTags before removal:', formData.selectedTags) // Debug log
+    
+    // Force a complete re-render by using a callback
     setFormData(prev => {
       const newSelectedTags = prev.selectedTags.filter(id => id !== tagId)
       console.log('New selectedTags after removal:', newSelectedTags) // Debug log
+      
+      // Return a completely new object to force re-render
       return {
         ...prev,
-        selectedTags: newSelectedTags
+        selectedTags: [...newSelectedTags], // Create new array reference
+        _tagUpdateId: Date.now() // Force change detection
       }
     })
   }
@@ -506,14 +565,9 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                   disabled={!formData.dueDate}
                 />
               </div>
-              <div className="flex items-start space-x-2 mt-2">
+                            <div className="flex items-start space-x-2 mt-2">
                 <p className="text-gray-500 text-xs">
-                  💡 Time is optional - without it, tasks are due at end of day.
-                </p>
-              </div>
-              <div className="flex items-center space-x-2 mt-1">
-                <p className="text-gray-500 text-xs">
-                  ⌨️ <strong>Desktop users:</strong> Click time field, then use arrow keys or type directly (14:30)
+                  💡 Time is optional - without it, tasks are due at end of day. Click dropdown or type directly (e.g., 14:30).
                 </p>
               </div>
             </div>
@@ -570,7 +624,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                   const isSelected = formData.selectedTags.includes(tag.id)
                   console.log(`Tag ${tag.name} (${tag.id}): selected = ${isSelected}`) // Debug log
                   return (
-                    <div key={`${tag.id}-${isSelected}`} className="relative">
+                    <div key={`${tag.id}-${isSelected}-${formData._tagUpdateId || 0}`} className="relative">
                       {isSelected ? (
                         <div className="group bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 cursor-default">
                           <span className="mr-6">{tag.name}</span>

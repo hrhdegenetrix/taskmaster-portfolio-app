@@ -102,10 +102,34 @@ const Layout = ({ children }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black bg-opacity-50"
           onClick={toggleSidebar}
         />
       )}
+
+      {/* Pull-out Tab (Always Visible) */}
+      <motion.div
+        className="fixed left-0 top-1/2 transform -translate-y-1/2 z-50"
+        initial={{ x: -10 }}
+        animate={{ x: isSidebarOpen ? -10 : 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <button
+          onClick={toggleSidebar}
+          className="bg-gradient-to-br from-primary-500 via-accent-500 to-fun-500 text-white px-3 py-8 rounded-r-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex flex-col items-center space-y-2 group"
+          title={isSidebarOpen ? "Close menu" : "Open menu"}
+        >
+          <motion.div
+            animate={{ rotate: isSidebarOpen ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Menu className="w-5 h-5" />
+          </motion.div>
+          <div className="text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            {isSidebarOpen ? 'CLOSE' : 'MENU'}
+          </div>
+        </button>
+      </motion.div>
 
       {/* Sidebar */}
       <motion.aside
@@ -113,7 +137,7 @@ const Layout = ({ children }) => {
         animate={{
           x: isSidebarOpen ? 0 : '-100%',
         }}
-        className="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0"
+        className="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out"
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
@@ -129,12 +153,7 @@ const Layout = ({ children }) => {
               </p>
             </div>
           </div>
-          <button
-            onClick={toggleSidebar}
-            className="p-1 rounded-md lg:hidden hover:bg-gray-100 dark:hover:bg-gray-700 focus-ring"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2">
@@ -199,21 +218,12 @@ const Layout = ({ children }) => {
       </motion.aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="w-full flex flex-col overflow-hidden">
         {/* Header */}
         <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between h-16 px-6">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={toggleSidebar}
-                className="p-2 rounded-md lg:hidden hover:bg-gray-100 dark:hover:bg-gray-700 focus-ring block"
-                title="Toggle sidebar"
-                style={{ display: 'block !important' }}
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-              
-              <div className="hidden sm:flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
                 <Search className="w-4 h-4 text-gray-400" />
                 <GlobalSearchInput />
               </div>
