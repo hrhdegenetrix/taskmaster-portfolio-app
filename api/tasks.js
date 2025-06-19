@@ -109,24 +109,8 @@ module.exports = async (req, res) => {
           return finalTask;
         });
 
-        // Final sort to prioritize overdue tasks within their completion groups
-        const finalSortedTasks = transformedTasks.sort((a, b) => {
-          // First, ensure completed tasks stay at the bottom
-          if (a.completed !== b.completed) {
-            return a.completed ? 1 : -1;
-          }
-          
-          // Within uncompleted tasks, prioritize overdue
-          if (!a.completed && !b.completed) {
-            if (a.priority === 'OVERDUE' && b.priority !== 'OVERDUE') return -1;
-            if (a.priority !== 'OVERDUE' && b.priority === 'OVERDUE') return 1;
-          }
-          
-          return 0; // Maintain original order for everything else
-        });
-
         res.status(200).json({
-          tasks: finalSortedTasks,
+          tasks: transformedTasks,
           pagination: {
             page: pageNum,
             limit: limitNum,

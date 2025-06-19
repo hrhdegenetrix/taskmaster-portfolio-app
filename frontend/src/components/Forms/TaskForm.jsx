@@ -148,11 +148,20 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
 
   // Remove tag from selection
   const removeTag = (tagId, event) => {
-    event.stopPropagation() // Prevent the toggle when clicking X
-    setFormData(prev => ({
-      ...prev,
-      selectedTags: prev.selectedTags.filter(id => id !== tagId)
-    }))
+    console.log('removeTag called with:', tagId, event) // Debug log
+    if (event) {
+      event.stopPropagation() // Prevent the toggle when clicking X
+      event.preventDefault()
+    }
+    console.log('Current selectedTags before removal:', formData.selectedTags) // Debug log
+    setFormData(prev => {
+      const newSelectedTags = prev.selectedTags.filter(id => id !== tagId)
+      console.log('New selectedTags after removal:', newSelectedTags) // Debug log
+      return {
+        ...prev,
+        selectedTags: newSelectedTags
+      }
+    })
   }
 
   // Create new tag(s) - supports comma separation
@@ -400,22 +409,14 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                     type="time"
                     value={formData.dueTime}
                     onChange={(e) => handleChange('dueTime', e.target.value)}
-                    className="w-full px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 cursor-pointer"
+                    className="w-full px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
                     disabled={!formData.dueDate}
                     title="Click to open time picker or type HH:MM format (e.g., 14:30 for 2:30 PM)"
                     placeholder="HH:MM"
-                    style={{
-                      WebkitAppearance: 'none',
-                      MozAppearance: 'textfield'
-                    }}
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <Clock className="w-4 h-4 text-gray-400" />
                   </div>
-                  <div className="absolute inset-0 cursor-pointer" 
-                       onClick={() => document.querySelector('input[type="time"]')?.focus()} 
-                       title="Click to set time"
-                  />
                 </div>
               </div>
               <div className="flex items-start space-x-2 mt-2">
@@ -481,30 +482,26 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                 {tags.map(tag => {
                   const isSelected = formData.selectedTags.includes(tag.id)
                   return (
-                    <div
-                      key={tag.id}
-                      className={`
-                        group relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 cursor-pointer
-                        ${isSelected
-                          ? 'bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg'
-                          : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500'
-                        }
-                      `}
-                      onClick={() => !isSelected && toggleTag(tag.id)}
-                    >
-                      <span className={isSelected ? 'mr-6' : ''}>{tag.name}</span>
-                      {isSelected && (
+                    <div key={tag.id} className="relative">
+                      {isSelected ? (
+                        <div className="group bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 cursor-default">
+                          <span className="mr-6">{tag.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeTag(tag.id)}
+                            className="absolute right-1 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-white hover:text-red-200 hover:bg-white hover:bg-opacity-20 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200"
+                            title="Remove tag"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeTag(tag.id, e)
-                            console.log('Removing tag:', tag.id) // Debug log
-                          }}
-                          className="absolute right-1 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-white hover:text-red-200 hover:bg-white hover:bg-opacity-20 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200"
-                          title="Remove tag"
+                          onClick={() => toggleTag(tag.id)}
+                          className="bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105"
                         >
-                          <X className="w-3 h-3" />
+                          {tag.name}
                         </button>
                       )}
                     </div>

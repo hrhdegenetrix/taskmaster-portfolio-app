@@ -18,6 +18,7 @@ import {
   MoreHorizontal
 } from 'lucide-react'
 import { useTask } from '../contexts/TaskContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { format, isToday, isTomorrow, isPast } from 'date-fns'
 import TaskForm from '../components/Forms/TaskForm'
 import { taskService } from '../services/api'
@@ -40,6 +41,8 @@ const Tasks = () => {
     isLoading,
     invalidateQueries
   } = useTask()
+  
+  const { isDark } = useTheme()
 
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
@@ -91,15 +94,25 @@ const Tasks = () => {
     }
   }
 
-  // Priority colors
-  const getPriorityColor = (priority) => {
-    const colors = {
+  // Priority colors (dark mode optimized)
+  const getPriorityColor = (priority, isDarkMode = false) => {
+    const lightColors = {
       OVERDUE: 'from-red-700 to-red-800',
       URGENT: 'from-red-500 to-red-600',
       HIGH: 'from-orange-500 to-orange-600',
       MEDIUM: 'from-blue-500 to-blue-600',
       LOW: 'from-green-500 to-green-600'
     }
+    
+    const darkColors = {
+      OVERDUE: 'from-red-800 to-red-900',
+      URGENT: 'from-red-600 to-red-700',
+      HIGH: 'from-orange-600 to-orange-700',
+      MEDIUM: 'from-blue-600 to-blue-700',
+      LOW: 'from-green-600 to-green-700'
+    }
+    
+    const colors = isDarkMode ? darkColors : lightColors
     return colors[priority] || colors.MEDIUM
   }
 
@@ -341,6 +354,7 @@ const Tasks = () => {
                 getDueDateDisplay={getDueDateDisplay}
                 categories={categories}
                 tags={tags}
+                isDark={isDark}
               />
             ))
           )}
@@ -374,7 +388,7 @@ const Tasks = () => {
 }
 
 // Task Card Component
-const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete, getPriorityColor, getStatusColor, getDueDateDisplay, categories, tags }) => {
+const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete, getPriorityColor, getStatusColor, getDueDateDisplay, categories, tags, isDark }) => {
   const dueDateInfo = getDueDateDisplay(task.dueDate)
   const category = categories.find(c => c.id === task.categoryId)
 
@@ -403,7 +417,7 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
           >
             {task.completed && <CheckSquare className="w-4 h-4" />}
           </button>
-          <div className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getPriorityColor(task.priority)} ${task.priority === 'OVERDUE' ? 'animate-pulse' : ''}`}>
+          <div className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getPriorityColor(task.priority, isDark)} ${task.priority === 'OVERDUE' ? 'animate-pulse' : ''}`}>
             {task.priority} {task.priority === 'OVERDUE' ? '💀' : task.priority === 'URGENT' ? '🚨' : task.priority === 'HIGH' ? '🔥' : task.priority === 'MEDIUM' ? '⚡' : '🌱'}
           </div>
         </div>
