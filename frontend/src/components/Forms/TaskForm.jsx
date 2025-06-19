@@ -395,19 +395,31 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                   onChange={(e) => handleChange('dueDate', e.target.value)}
                   className="px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
                 />
-                <input
-                  type="time"
-                  value={formData.dueTime}
-                  onChange={(e) => handleChange('dueTime', e.target.value)}
-                  className="px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
-                  disabled={!formData.dueDate}
-                  title="Click to select time or type HH:MM format"
-                  placeholder="HH:MM"
-                />
+                <div className="relative">
+                  <input
+                    type="time"
+                    value={formData.dueTime}
+                    onChange={(e) => handleChange('dueTime', e.target.value)}
+                    className="w-full px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
+                    disabled={!formData.dueDate}
+                    title="Click the clock icon or type HH:MM format (e.g., 14:30 for 2:30 PM)"
+                    placeholder="HH:MM"
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                  </div>
+                </div>
               </div>
-              <p className="text-gray-500 text-xs mt-2">
-                💡 Time is optional - without it, tasks are due at end of day. Click time field or type directly (e.g., 14:30)
-              </p>
+              <div className="flex items-start space-x-2 mt-2">
+                <p className="text-gray-500 text-xs">
+                  💡 Time is optional - without it, tasks are due at end of day.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2 mt-1">
+                <p className="text-gray-500 text-xs">
+                  ⌨️ <strong>Desktop users:</strong> Click time field, then use arrow keys or type directly (14:30)
+                </p>
+              </div>
             </div>
           </div>
 

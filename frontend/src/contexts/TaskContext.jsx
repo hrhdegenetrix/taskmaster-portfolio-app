@@ -84,6 +84,7 @@ export const TaskProvider = ({ children }) => {
     ['tasks', state.filters, state.sort],
     () => taskService.getTasks({
       ...state.filters,
+      categoryId: state.filters.category, // Fix: backend expects categoryId, not category
       sortBy: state.sort.field,
       sortOrder: state.sort.order
     }),

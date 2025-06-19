@@ -53,7 +53,10 @@ module.exports = async (req, res) => {
         
         // Add the requested sort
         if (sortBy === 'priority') {
-          orderBy.push({ priority: sortOrder === 'asc' ? 'asc' : 'desc' });
+          // Custom priority order: OVERDUE, URGENT, HIGH, MEDIUM, LOW
+          orderBy.push({ 
+            priority: sortOrder === 'asc' ? 'asc' : 'desc'
+          });
         } else if (sortBy === 'dueDate') {
           // For dueDate, put null values last when ascending, first when descending
           orderBy.push({ 
@@ -87,14 +90,43 @@ module.exports = async (req, res) => {
           prisma.task.count({ where })
         ]);
 
-        // Transform tasks to include tags properly
-        const transformedTasks = tasks.map(task => ({
-          ...task,
-          tags: task.tags.map(taskTag => taskTag.tag)
-        }));
+        // Transform tasks to include tags properly and mark overdue
+        const now = new Date();
+        const transformedTasks = tasks.map(task => {
+          let finalTask = {
+            ...task,
+            tags: task.tags.map(taskTag => taskTag.tag)
+          };
+
+          // Check if task is overdue and not completed
+          if (task.dueDate && !task.completed && new Date(task.dueDate) < now) {
+            // Mark as overdue if not already overdue
+            if (task.priority !== 'OVERDUE') {
+              finalTask.priority = 'OVERDUE';
+              finalTask.isAutoOverdue = true; // Flag to indicate auto-assignment
+            }
+          }
+
+          return finalTask;
+        });
+
+        // Sort so overdue tasks appear first (within their completion group)
+        const sortedTasks = transformedTasks.sort((a, b) => {
+          // First sort by completion status
+          if (a.completed !== b.completed) {
+            return a.completed ? 1 : -1;
+          }
+          
+          // Then prioritize overdue tasks
+          if (a.priority === 'OVERDUE' && b.priority !== 'OVERDUE') return -1;
+          if (a.priority !== 'OVERDUE' && b.priority === 'OVERDUE') return 1;
+          
+          // Then follow the original sort order for non-overdue tasks
+          return 0;
+        });
 
         res.status(200).json({
-          tasks: transformedTasks,
+          tasks: sortedTasks,
           pagination: {
             page: pageNum,
             limit: limitNum,

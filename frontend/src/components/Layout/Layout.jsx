@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useTask } from '../../contexts/TaskContext'
+import UrgentTaskAlert from './UrgentTaskAlert'
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -75,7 +76,7 @@ const Layout = ({ children }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 xl:hidden"
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
           onClick={toggleSidebar}
         />
       )}
@@ -86,7 +87,7 @@ const Layout = ({ children }) => {
         animate={{
           x: isSidebarOpen ? 0 : '-100%',
         }}
-        className="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out xl:translate-x-0 xl:static xl:inset-0"
+        className="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0"
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
@@ -104,7 +105,7 @@ const Layout = ({ children }) => {
           </div>
           <button
             onClick={toggleSidebar}
-            className="p-1 rounded-md xl:hidden hover:bg-gray-100 dark:hover:bg-gray-700 focus-ring"
+            className="p-1 rounded-md lg:hidden hover:bg-gray-100 dark:hover:bg-gray-700 focus-ring"
           >
             <X className="w-5 h-5" />
           </button>
@@ -179,7 +180,7 @@ const Layout = ({ children }) => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={toggleSidebar}
-                className="p-2 rounded-md xl:hidden hover:bg-gray-100 dark:hover:bg-gray-700 focus-ring block"
+                className="p-2 rounded-md lg:hidden hover:bg-gray-100 dark:hover:bg-gray-700 focus-ring block"
                 title="Toggle sidebar"
               >
                 <Menu className="w-5 h-5" />
@@ -216,6 +217,9 @@ const Layout = ({ children }) => {
             </div>
           </div>
         </header>
+
+        {/* Urgent Task Alert */}
+        <UrgentTaskAlert />
 
         {/* Page content */}
         <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">

@@ -94,6 +94,7 @@ const Tasks = () => {
   // Priority colors
   const getPriorityColor = (priority) => {
     const colors = {
+      OVERDUE: 'from-red-700 to-red-800',
       URGENT: 'from-red-500 to-red-600',
       HIGH: 'from-orange-500 to-orange-600',
       MEDIUM: 'from-blue-500 to-blue-600',
@@ -219,6 +220,7 @@ const Tasks = () => {
             className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             <option value="">All Priority 🎯</option>
+            <option value="OVERDUE">Overdue 💀</option>
             <option value="URGENT">Urgent 🚨</option>
             <option value="HIGH">High 🔥</option>
             <option value="MEDIUM">Medium ⚡</option>
@@ -401,8 +403,8 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
           >
             {task.completed && <CheckSquare className="w-4 h-4" />}
           </button>
-          <div className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getPriorityColor(task.priority)}`}>
-            {task.priority} {task.priority === 'URGENT' ? '🚨' : task.priority === 'HIGH' ? '🔥' : task.priority === 'MEDIUM' ? '⚡' : '🌱'}
+          <div className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getPriorityColor(task.priority)} ${task.priority === 'OVERDUE' ? 'animate-pulse' : ''}`}>
+            {task.priority} {task.priority === 'OVERDUE' ? '💀' : task.priority === 'URGENT' ? '🚨' : task.priority === 'HIGH' ? '🔥' : task.priority === 'MEDIUM' ? '⚡' : '🌱'}
           </div>
         </div>
         
