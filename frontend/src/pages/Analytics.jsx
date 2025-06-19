@@ -39,11 +39,15 @@ import {
   AreaChart
 } from 'recharts'
 import { analyticsService } from '../services/api'
+import { useTask } from '../contexts/TaskContext'
 import toast from 'react-hot-toast'
 
 const Analytics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month')
   const [showAchievements, setShowAchievements] = useState(true)
+  
+  // Get the correct lifetime completed count from TaskContext (localStorage)
+  const { lifetimeCompleted, allTasks } = useTask()
 
   // Fetch analytics data using consolidated endpoint
   const { data: overview, isLoading: overviewLoading } = useQuery(
@@ -84,8 +88,10 @@ const Analytics = () => {
   const getAchievements = () => {
     if (!overview?.overview) return []
     
-    // Use lifetime data for achievements (not period-filtered data)
-    const { lifetimeTotalTasks, lifetimeCompletedTasks, lifetimeCompletionRate } = overview.overview
+    // Use actual localStorage lifetimeCompleted and total tasks from context
+    const lifetimeTotalTasks = allTasks.length // Current total tasks in database
+    const lifetimeCompletedTasks = lifetimeCompleted // From localStorage - true lifetime count
+    const lifetimeCompletionRate = lifetimeTotalTasks > 0 ? (lifetimeCompletedTasks / lifetimeTotalTasks) * 100 : 0
     const currentStreak = productivity?.streaks?.current || 0
     const longestStreak = productivity?.streaks?.longest || 0
     
@@ -333,17 +339,17 @@ const Analytics = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total Tasks"
-            value={overview.overview.lifetimeTotalTasks}
+            value={allTasks.length}
             icon={CheckCircle}
             color="from-blue-500 to-blue-600"
             subtitle={`${overview.overview.totalTasks} this ${selectedPeriod}`}
           />
           <StatCard
             title="Completed"
-            value={overview.overview.lifetimeCompletedTasks}
+            value={lifetimeCompleted}
             icon={Trophy}
             color="from-green-500 to-green-600"
-            subtitle={`${overview.overview.lifetimeCompletionRate}% lifetime rate`}
+            subtitle={`${((lifetimeCompleted / Math.max(allTasks.length, 1)) * 100).toFixed(1)}% lifetime rate`}
           />
           <StatCard
             title="In Progress"
@@ -492,11 +498,14 @@ const Analytics = () => {
             
             <div className="bg-white bg-opacity-20 rounded-xl p-4">
               <Coffee className="w-6 h-6 mb-2" />
-              <h3 className="font-bold">Motivation Level</h3>
-                             <p className="text-2xl font-bold">
-                 {overview?.overview?.lifetimeCompletionRate > 80 ? 'Excellent! 🔥' : 
-                  overview?.overview?.lifetimeCompletionRate > 60 ? 'Great! 👍' : 
-                  overview?.overview?.lifetimeCompletionRate > 40 ? 'Good! 💪' : 'Keep Going! 🌱'}
+                             <h3 className="font-bold">Motivation Level</h3>
+               <p className="text-2xl font-bold">
+                 {(() => {
+                   const rate = (lifetimeCompleted / Math.max(allTasks.length, 1)) * 100;
+                   return rate > 80 ? 'Excellent! 🔥' : 
+                          rate > 60 ? 'Great! 👍' : 
+                          rate > 40 ? 'Good! 💪' : 'Keep Going! 🌱';
+                 })()}
                </p>
                <p className="text-sm opacity-90">Based on lifetime completion rate</p>
             </div>
