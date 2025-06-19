@@ -546,9 +546,9 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
       exit={{ opacity: 0, y: -20 }}
       transition={{ delay: index * 0.1 }}
       className={`
-        bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-primary-500 flex flex-col
+        bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-primary-500 flex flex-col
         ${task.completed ? 'opacity-75' : ''}
-        ${viewMode === 'grid' ? 'h-64' : ''}
+        ${viewMode === 'grid' ? 'h-48' : ''}
       `}
     >
       <div className="flex items-start justify-between mb-4">
