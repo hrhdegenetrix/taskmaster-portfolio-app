@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus,
   CheckSquare,
@@ -12,9 +12,11 @@ import {
 } from 'lucide-react'
 import { useTask } from '../contexts/TaskContext'
 import { format, isToday, isTomorrow, isPast } from 'date-fns'
+import TaskForm from '../components/Forms/TaskForm'
 
 const Dashboard = () => {
-  const { tasks, categories, isLoading } = useTask()
+  const { tasks, categories, tags, isLoading } = useTask()
+  const [showCreateForm, setShowCreateForm] = useState(false)
 
   // Calculate statistics
   const stats = {
@@ -100,13 +102,13 @@ const Dashboard = () => {
             Welcome back! Let's get stuff done today! 🎯
           </p>
         </div>
-        <Link
-          to="/tasks"
+        <button
+          onClick={() => setShowCreateForm(true)}
           className="bg-gradient-to-r from-primary-500 via-accent-500 to-fun-500 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 animate-bounce-soft"
         >
           <Plus className="w-5 h-5 mr-2 inline" />
           Create New Task ✨
-        </Link>
+        </button>
       </div>
 
       {/* Stats Grid */}
@@ -315,6 +317,17 @@ const Dashboard = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Create Task Modal */}
+      <AnimatePresence>
+        {showCreateForm && (
+          <TaskForm
+            onClose={() => setShowCreateForm(false)}
+            categories={categories}
+            tags={tags}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

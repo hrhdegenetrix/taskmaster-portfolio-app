@@ -78,6 +78,21 @@ const Tasks = () => {
     }
   )
 
+  // Delete all completed tasks mutation
+  const deleteAllCompletedMutation = useMutation(
+    async () => {
+      const completedTasks = allTasks.filter(t => t.completed)
+      await Promise.all(completedTasks.map(task => taskService.deleteTask(task.id)))
+    },
+    {
+      onSuccess: () => {
+        toast.success('All completed tasks deleted! 🧹')
+        invalidateQueries()
+      },
+      onError: () => toast.error('Failed to delete completed tasks 😕')
+    }
+  )
+
   // Handle task completion toggle
   const handleToggleCompletion = (task) => {
     const newCompleted = !task.completed
@@ -94,6 +109,16 @@ const Tasks = () => {
   const handleDeleteTask = (task) => {
     if (window.confirm(`Are you sure you want to delete "${task.title}"? This can't be undone! 🗑️`)) {
       deleteTaskMutation.mutate(task.id)
+    }
+  }
+
+  // Handle delete all completed tasks
+  const handleDeleteAllCompleted = () => {
+    const completedCount = allTasks.filter(t => t.completed).length
+    if (completedCount === 0) return
+    
+    if (window.confirm(`Are you sure you want to delete all ${completedCount} completed tasks? This can't be undone! 🧹`)) {
+      deleteAllCompletedMutation.mutate()
     }
   }
 
@@ -310,22 +335,41 @@ const Tasks = () => {
 
         <div className="flex items-center space-x-4">
           {/* Show Completed Toggle */}
-          <label className="flex items-center space-x-2 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={showCompleted}
-              onChange={toggleShowCompleted}
-              className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2 transition-all duration-200"
-            />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary-600 transition-colors duration-200">
-              Show completed tasks ✅
-            </span>
-            {!showCompleted && allTasks.filter(t => t.completed).length > 0 && (
-              <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full font-medium">
-                {allTasks.filter(t => t.completed).length} hidden
+          <div className="flex items-center space-x-2">
+            <label className="flex items-center space-x-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={showCompleted}
+                onChange={toggleShowCompleted}
+                className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2 transition-all duration-200"
+              />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary-600 transition-colors duration-200">
+                Show completed tasks
               </span>
+            </label>
+            
+            {/* Delete All Completed Button */}
+            {allTasks.filter(t => t.completed).length > 0 && (
+              <button
+                onClick={handleDeleteAllCompleted}
+                disabled={deleteAllCompletedMutation.isLoading}
+                className={`px-3 py-1 text-xs rounded-full font-medium transition-all duration-200 transform hover:scale-105 ${
+                  showCompleted 
+                    ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                } ${deleteAllCompletedMutation.isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                title={showCompleted ? 'Delete all completed tasks' : `${allTasks.filter(t => t.completed).length} completed tasks hidden`}
+              >
+                {deleteAllCompletedMutation.isLoading ? (
+                  'Deleting...'
+                ) : showCompleted ? (
+                  `Delete all ${allTasks.filter(t => t.completed).length} 🗑️`
+                ) : (
+                  `${allTasks.filter(t => t.completed).length} hidden`
+                )}
+              </button>
             )}
-          </label>
+          </div>
 
           <div className="text-sm text-gray-600 dark:text-gray-400">
             <span className="font-medium">{showCompleted ? allTasks.length : tasks.length}</span> tasks shown •{' '}
@@ -487,8 +531,8 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+      <div className="flex items-center justify-between min-h-[28px]">
+        <div className="flex items-center space-x-2 flex-1">
           {category && (
             <div className="flex items-center space-x-1 px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded-lg text-xs">
               <span>{category.icon}</span>
@@ -504,12 +548,14 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
           )}
         </div>
 
-        {dueDateInfo && (
-          <div className={`flex items-center space-x-1 text-xs font-medium ${dueDateInfo.color}`}>
-            <span>{dueDateInfo.emoji}</span>
-            <span>{dueDateInfo.text}</span>
-          </div>
-        )}
+        <div className="flex-shrink-0">
+          {dueDateInfo && (
+            <div className={`flex items-center space-x-1 text-xs font-medium ${dueDateInfo.color}`}>
+              <span>{dueDateInfo.emoji}</span>
+              <span>{dueDateInfo.text}</span>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   )
