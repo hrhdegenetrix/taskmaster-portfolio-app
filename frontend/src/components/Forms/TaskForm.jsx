@@ -104,8 +104,8 @@ const TimeDropdown = ({ value, onChange, disabled }) => {
   const selectedOption = timeOptions.find(opt => opt.value === value)
   
   return (
-    <div className="relative" ref={dropdownRef}>
-      <div className="flex">
+    <div className="relative w-full" ref={dropdownRef}>
+      <div className="flex w-full">
         <input
           ref={inputRef}
           type="text"
@@ -114,7 +114,7 @@ const TimeDropdown = ({ value, onChange, disabled }) => {
           onBlur={handleInputBlur}
           placeholder="HH:MM or select..."
           disabled={disabled}
-          className={`flex-1 px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-l-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 ${
+          className={`flex-1 min-w-0 px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-l-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 ${
             disabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         />
@@ -122,11 +122,11 @@ const TimeDropdown = ({ value, onChange, disabled }) => {
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          className={`px-3 py-3 border-2 border-l-0 border-gray-200 dark:border-gray-600 rounded-r-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 ${
+          className={`flex-shrink-0 px-3 py-3 border-2 border-l-0 border-gray-200 dark:border-gray-600 rounded-r-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 ${
             disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600'
           }`}
         >
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
             <Clock className="w-4 h-4 text-gray-400" />
             <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -559,11 +559,13 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
                   onChange={(e) => handleChange('dueDate', e.target.value)}
                   className="px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
                 />
-                <TimeDropdown
-                  value={formData.dueTime}
-                  onChange={(time) => handleChange('dueTime', time)}
-                  disabled={!formData.dueDate}
-                />
+                <div className="min-w-0">
+                  <TimeDropdown
+                    value={formData.dueTime}
+                    onChange={(time) => handleChange('dueTime', time)}
+                    disabled={!formData.dueDate}
+                  />
+                </div>
               </div>
                             <div className="flex items-start space-x-2 mt-2">
                 <p className="text-gray-500 text-xs">

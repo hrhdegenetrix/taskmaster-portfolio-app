@@ -110,22 +110,36 @@ const Layout = ({ children }) => {
       {/* Pull-out Tab (Always Visible) */}
       <motion.div
         className="fixed left-0 top-1/2 transform -translate-y-1/2 z-50"
-        initial={{ x: -10 }}
-        animate={{ x: isSidebarOpen ? -10 : 0 }}
+        initial={{ x: -8 }}
+        animate={{ x: isSidebarOpen ? -8 : 0 }}
         transition={{ duration: 0.3 }}
       >
         <button
           onClick={toggleSidebar}
-          className="bg-gradient-to-br from-primary-500 via-accent-500 to-fun-500 text-white px-3 py-8 rounded-r-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex flex-col items-center space-y-2 group"
+          onTouchStart={toggleSidebar} // Add touch support
+          className="bg-gradient-to-br from-primary-500 via-accent-500 to-fun-500 text-white w-5 h-32 rounded-r-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center space-y-1 group touch-manipulation"
           title={isSidebarOpen ? "Close menu" : "Open menu"}
         >
           <motion.div
             animate={{ rotate: isSidebarOpen ? 180 : 0 }}
             transition={{ duration: 0.3 }}
+            className="flex flex-col items-center"
           >
-            <Menu className="w-5 h-5" />
+            <svg 
+              className="w-3 h-3" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={3} 
+                d={isSidebarOpen ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} 
+              />
+            </svg>
           </motion.div>
-          <div className="text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div className="writing-mode-vertical text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform rotate-90">
             {isSidebarOpen ? 'CLOSE' : 'MENU'}
           </div>
         </button>
