@@ -74,12 +74,7 @@ const Tasks = () => {
         invalidateQueries()
       },
       onError: (error) => {
-        // Check if it's an overdue task error
-        if (error?.response?.data?.code === 'TASK_OVERDUE') {
-          toast.error(error.response.data.error)
-        } else {
-          toast.error('Failed to update task 😕')
-        }
+        toast.error('Failed to update task 😕')
       }
     }
   )

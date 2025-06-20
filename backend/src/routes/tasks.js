@@ -245,32 +245,8 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    // Check if task is overdue and prevent certain changes (except for allowed fields)
-    if (existingTask.dueDate && !existingTask.completed) {
-      const now = new Date();
-      const existingDueDate = new Date(existingTask.dueDate);
-      const isOverdue = existingDueDate < now;
-      
-      if (isOverdue) {
-        // Prevent status changes (except to COMPLETED) and priority changes on overdue tasks
-        if (status !== undefined && status.toUpperCase() !== 'COMPLETED') {
-          return res.status(400).json({ 
-            error: "Can't make edits to an overdue task; try changing the time.",
-            code: 'TASK_OVERDUE'
-          });
-        }
-        
-        if (priority !== undefined && priority !== null && priority.toUpperCase() !== existingTask.priority) {
-          return res.status(400).json({ 
-            error: "Can't make edits to an overdue task; try changing the time.",
-            code: 'TASK_OVERDUE'
-          });
-        }
-        
-        // Allow changes to: title, description, categoryId, tags, imageUrl, position, dueDate, completed
-        // These are reasonable changes to make on overdue tasks
-      }
-    }
+    // Allow all edits on tasks, including overdue ones
+    // Users should be able to fix overdue tasks however they want
 
     // Prepare update data
     const updateData = {};

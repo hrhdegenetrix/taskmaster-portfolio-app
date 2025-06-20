@@ -319,12 +319,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
         onClose()
       },
       onError: (error) => {
-        // Check if it's an overdue task error
-        if (error?.response?.data?.code === 'TASK_OVERDUE') {
-          toast.error(error.response.data.error)
-        } else {
-          toast.error('Oops! Something went wrong 😕')
-        }
+        toast.error('Oops! Something went wrong 😕')
         console.error('Task mutation error:', error)
       }
     }
