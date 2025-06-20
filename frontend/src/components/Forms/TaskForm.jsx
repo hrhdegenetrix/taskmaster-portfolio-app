@@ -272,22 +272,40 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     description: task?.description || '',
     priority: (task?.priority && task.priority !== 'OVERDUE') ? task.priority : 'MEDIUM',
     status: task?.status || 'PENDING',
-    dueDate: task?.dueDate ? task.dueDate.split('T')[0] : new Date().toISOString().split('T')[0],
+    dueDate: task?.dueDate ? (() => {
+      // Convert UTC datetime to user's local timezone for date extraction
+      const taskDate = new Date(task.dueDate);
+      const year = taskDate.getFullYear();
+      const month = (taskDate.getMonth() + 1).toString().padStart(2, '0');
+      const day = taskDate.getDate().toString().padStart(2, '0');
+      const localDateStr = `${year}-${month}-${day}`;
+      console.log('📅 Date conversion for editing:', {
+        utcFromDb: task.dueDate,
+        localDateObj: taskDate.toString(),
+        formFieldValue: localDateStr
+      });
+      return localDateStr;
+    })() : new Date().toISOString().split('T')[0],
     dueTime: task?.dueDate ? (() => {
-      // Extract time directly from ISO string to avoid timezone conversion
-      const isoString = task.dueDate;
-      const timePart = isoString.split('T')[1]; // Get the time part
-      if (!timePart) return '';
+      // Convert UTC datetime to user's local timezone for editing
+      const taskDate = new Date(task.dueDate);
+      const hours = taskDate.getHours().toString().padStart(2, '0');
+      const minutes = taskDate.getMinutes().toString().padStart(2, '0');
+      const seconds = taskDate.getSeconds().toString().padStart(2, '0');
       
-      const time = timePart.split('.')[0]; // Remove milliseconds and Z
-      const [hours, minutes, seconds] = time.split(':');
-      
-      // Check if it's set to end of day (23:59:59) - if so, no specific time was set
+      // Check if it's set to end of day (23:59:59) in local time - if so, no specific time was set
       if (hours === '23' && minutes === '59' && seconds === '59') {
+        console.log('⏰ Time conversion for editing - end of day detected, showing no specific time');
         return '';
       }
       
-      return `${hours}:${minutes}`;
+      const localTimeStr = `${hours}:${minutes}`;
+      console.log('⏰ Time conversion for editing:', {
+        utcFromDb: task.dueDate,
+        localDateObj: taskDate.toString(),
+        formFieldValue: localTimeStr
+      });
+      return localTimeStr;
     })() : '',
     categoryId: task?.categoryId || '',
     selectedTags: task?.tags?.map(t => t.id) || []
@@ -565,15 +583,30 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       return
     }
 
-    // Combine date and time - no timezone conversion, treat as local time
+    // Combine date and time with proper timezone handling
     let combinedDateTime = null;
     if (formData.dueDate) {
       if (formData.dueTime) {
-        // Send raw datetime string without timezone info - backend treats as local
-        combinedDateTime = `${formData.dueDate}T${formData.dueTime}:00`;
+        // Create local datetime and convert to ISO string (UTC)
+        const [hours, minutes] = formData.dueTime.split(':');
+        const localDate = new Date(formData.dueDate);
+        localDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        combinedDateTime = localDate.toISOString();
+        console.log('🕐 DateTime conversion:', {
+          userInput: `${formData.dueDate} ${formData.dueTime}`,
+          localDate: localDate.toString(),
+          utcForStorage: combinedDateTime
+        });
       } else {
-        // If no time specified, set to end of day
-        combinedDateTime = `${formData.dueDate}T23:59:59`;
+        // If no time specified, set to end of day in local timezone
+        const localDate = new Date(formData.dueDate);
+        localDate.setHours(23, 59, 59, 999);
+        combinedDateTime = localDate.toISOString();
+        console.log('🕐 DateTime conversion (end of day):', {
+          userInput: formData.dueDate,
+          localDate: localDate.toString(),
+          utcForStorage: combinedDateTime
+        });
       }
     }
 
