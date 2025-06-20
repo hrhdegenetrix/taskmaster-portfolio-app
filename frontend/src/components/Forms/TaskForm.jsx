@@ -270,7 +270,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
   const [formData, setFormData] = useState({
     title: task?.title || '',
     description: task?.description || '',
-    priority: (task?.priority && task.priority !== 'OVERDUE') ? task.priority : 'MEDIUM',
+    priority: task?.priority || 'MEDIUM', // Always use stored priority, never "OVERDUE"
     status: task?.status || 'PENDING',
     dueDate: task?.dueDate ? (() => {
       // Convert UTC datetime to user's local timezone for date extraction
@@ -346,15 +346,38 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       ? taskService.updateTask(task.id, taskData)
       : taskService.createTask(taskData),
     {
-      onSuccess: () => {
-        toast.success(isEditing ? 'Task updated! 🎉' : 'Task created! ✨')
+      onSuccess: async (updatedTask) => {
+        // Show appropriate success message
+        if (isEditing) {
+          // Check if we converted an overdue task to future
+          if (formData._wasOverdueNowFuture) {
+            toast.success('🎉 Overdue task rescued! Now scheduled for the future! ⏰➡️🌟')
+          } else {
+            toast.success('Task updated! 🎉')
+          }
+        } else {
+          toast.success('Task created! ✨')
+        }
         
         // Increment lifetime total only when creating new tasks (not editing)
         if (!isEditing) {
           incrementLifetimeTotal()
         }
         
+        // Enhanced cache invalidation for immediate refresh
+        await Promise.all([
+          queryClient.invalidateQueries('tasks'),
+          queryClient.refetchQueries('tasks', { active: true })
+        ]);
+        
+        // Force immediate background refresh
         invalidateQueries()
+        
+        // Log the successful update for debugging
+        if (isEditing && updatedTask) {
+          console.log('✅ Task successfully updated:', updatedTask);
+        }
+        
         onClose()
       },
       onError: (error) => {
@@ -610,12 +633,35 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       }
     }
 
-    // Prepare task data - ensure priority is never "OVERDUE"
-    const validPriority = formData.priority === 'OVERDUE' ? 'HIGH' : formData.priority;
+    // Smart priority adjustment: If task was overdue but now has future due date, upgrade priority
+    let smartPriority = formData.priority === 'OVERDUE' ? 'HIGH' : formData.priority;
+    
+    // Check if this was an overdue task that's now being set to future date
+    if (isEditing && task?.dueDate && combinedDateTime) {
+      const oldDate = new Date(task.dueDate);
+      const newDate = new Date(combinedDateTime);
+      const now = new Date();
+      
+      // If task was overdue (old date was past) but new date is in future
+      const wasOverdue = oldDate < now;
+      const willBeFuture = newDate > now;
+      
+      if (wasOverdue && willBeFuture) {
+        // Auto-upgrade priority if it was overdue but now in future
+        if (smartPriority === 'LOW' || smartPriority === 'MEDIUM') {
+          smartPriority = 'HIGH'; // Upgraded because it was previously overdue
+        }
+        console.log('📈 Auto-upgraded priority from overdue task to:', smartPriority);
+        
+        // Set a flag to show special toast message
+        formData._wasOverdueNowFuture = true;
+      }
+    }
+    
     const taskData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
-      priority: validPriority,
+      priority: smartPriority,
       status: formData.status,
       categoryId: formData.categoryId || null,
       tags: formData.selectedTags
