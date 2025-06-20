@@ -279,14 +279,11 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       const month = (taskDate.getMonth() + 1).toString().padStart(2, '0');
       const day = taskDate.getDate().toString().padStart(2, '0');
       const localDateStr = `${year}-${month}-${day}`;
-      // Debug only when needed
-      if (window.location.search.includes('debug')) {
-        console.log('📅 Date conversion for editing:', {
-          utcFromDb: task.dueDate,
-          localDateObj: taskDate.toString(),
-          formFieldValue: localDateStr
-        });
-      }
+      console.log('📅 Date conversion for editing:', {
+        utcFromDb: task.dueDate,
+        localDateObj: taskDate.toString(),
+        formFieldValue: localDateStr
+      });
       return localDateStr;
     })() : new Date().toISOString().split('T')[0],
     dueTime: task?.dueDate ? (() => {
@@ -298,20 +295,16 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       
       // Check if it's set to end of day (23:59:59) in local time - if so, no specific time was set
       if (hours === '23' && minutes === '59' && seconds === '59') {
-        if (window.location.search.includes('debug')) {
-          console.log('⏰ Time conversion for editing - end of day detected, showing no specific time');
-        }
+        console.log('⏰ Time conversion for editing - end of day detected, showing no specific time');
         return '';
       }
       
       const localTimeStr = `${hours}:${minutes}`;
-      if (window.location.search.includes('debug')) {
-        console.log('⏰ Time conversion for editing:', {
-          utcFromDb: task.dueDate,
-          localDateObj: taskDate.toString(),
-          formFieldValue: localTimeStr
-        });
-      }
+      console.log('⏰ Time conversion for editing:', {
+        utcFromDb: task.dueDate,
+        localDateObj: taskDate.toString(),
+        formFieldValue: localTimeStr
+      });
       return localTimeStr;
     })() : '',
     categoryId: task?.categoryId || '',
@@ -628,23 +621,37 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       if (formData.dueTime) {
         // Create local datetime and convert to ISO string (UTC)
         const [hours, minutes] = formData.dueTime.split(':');
-        const localDate = new Date(formData.dueDate);
+        
+        // FIXED: Parse date components to avoid timezone interpretation issues
+        const [year, month, day] = formData.dueDate.split('-').map(num => parseInt(num));
+        const localDate = new Date(year, month - 1, day); // month is 0-indexed in JS
         localDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
         combinedDateTime = localDate.toISOString();
         console.log('🕐 DateTime conversion:', {
           userInput: `${formData.dueDate} ${formData.dueTime}`,
-          localDate: localDate.toString(),
-          utcForStorage: combinedDateTime
+          userSelectedDate: formData.dueDate,
+          userSelectedTime: formData.dueTime,
+          parsedComponents: { year, month, day, hours: parseInt(hours), minutes: parseInt(minutes) },
+          rawDateObject: `new Date(${year}, ${month-1}, ${day})`,
+          afterSetHours: localDate.toString(),
+          utcForStorage: combinedDateTime,
+          parsedBackFromUTC: new Date(combinedDateTime).toString()
         });
       } else {
         // If no time specified, set to end of day in local timezone
-        const localDate = new Date(formData.dueDate);
+        // FIXED: Parse date components to avoid timezone interpretation issues
+        const [year, month, day] = formData.dueDate.split('-').map(num => parseInt(num));
+        const localDate = new Date(year, month - 1, day); // month is 0-indexed in JS
         localDate.setHours(23, 59, 59, 999);
         combinedDateTime = localDate.toISOString();
         console.log('🕐 DateTime conversion (end of day):', {
           userInput: formData.dueDate,
-          localDate: localDate.toString(),
-          utcForStorage: combinedDateTime
+          userSelectedDate: formData.dueDate,
+          parsedComponents: { year, month, day },
+          rawDateObject: `new Date(${year}, ${month-1}, ${day})`,
+          afterSetHours: localDate.toString(),
+          utcForStorage: combinedDateTime,
+          parsedBackFromUTC: new Date(combinedDateTime).toString()
         });
       }
     }
@@ -669,7 +676,9 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
         newDate: newDate.toString(),
         now: now.toString(),
         oldDateIsPast: oldDate < now,
-        newDateIsFuture: newDate > now
+        newDateIsFuture: newDate > now,
+        timeDifference: `New date is ${Math.round((newDate - now) / (1000 * 60 * 60))} hours from now`,
+        explanation: willBeFuture ? '✅ Moving to future - will upgrade priority' : '❌ Still in past - no upgrade needed'
       });
       
       if (wasOverdue && willBeFuture) {

@@ -206,19 +206,6 @@ const Tasks = () => {
     
     const hasTime = date.getHours() !== 23 || date.getMinutes() !== 59 || date.getSeconds() !== 59;
     
-    // Debug logging for overdue detection (only for debugging)
-    if (window.location.search.includes('debug')) {
-      console.log('📅 Due Date Display Analysis:', {
-        dueDate,
-        parsedDate: date.toString(),
-        now: now.toString(),
-        hasTime,
-        isBeforeNow: date < now,
-        isToday: isToday(date),
-        isTomorrow: isTomorrow(date)
-      });
-    }
-    
     if (isToday(date)) {
       if (hasTime) {
         return { text: `Due today at ${format(date, 'h:mm a')}`, color: 'text-orange-600 dark:text-orange-400', emoji: '⚡' }
@@ -233,15 +220,31 @@ const Tasks = () => {
       return { text: 'Due tomorrow', color: 'text-yellow-600 dark:text-yellow-400', emoji: '⏰' }
     }
     
-    // Only mark as overdue if the date is actually past (not just today)
+    // Check if overdue but ALWAYS show the actual date/time
     const startOfToday = new Date()
     startOfToday.setHours(0, 0, 0, 0)
-    if (date < startOfToday) {
-      return { text: 'Overdue', color: 'text-red-600 dark:text-red-400', emoji: '🚨' }
+    const isOverdue = date < startOfToday;
+    
+    // Debug logging for overdue detection
+    console.log('📅 Due Date Display Analysis:', {
+      dueDate,
+      parsedDate: date.toString(),
+      now: now.toString(),
+      hasTime,
+      isOverdue,
+      startOfToday: startOfToday.toString(),
+      willShowAs: isOverdue ? 'OVERDUE (red 🚨)' : 'Normal (gray 📅)'
+    });
+    
+    // Always show the actual date/time, just change color if overdue
+    const dateText = hasTime ? format(date, 'MMM dd, h:mm a') : format(date, 'MMM dd');
+    
+    if (isOverdue) {
+      return { text: dateText, color: 'text-red-600 dark:text-red-400', emoji: '🚨' }
     }
     
     return { 
-      text: hasTime ? format(date, 'MMM dd, h:mm a') : format(date, 'MMM dd'), 
+      text: dateText, 
       color: 'text-gray-600 dark:text-gray-400', 
       emoji: '📅' 
     };
