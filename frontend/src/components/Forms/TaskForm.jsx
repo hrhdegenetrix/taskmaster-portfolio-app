@@ -167,6 +167,15 @@ const TimeDropdown = ({ value, onChange, disabled }) => {
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
+          onFocus={() => {
+            // If time is empty and user focuses on input, set current time as default
+            if (!value || value === '') {
+              const now = new Date()
+              const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+              onChange(currentTime)
+              setInputValue(currentTime)
+            }
+          }}
           placeholder="HH:MM or select..."
           disabled={disabled}
           className={`flex-1 min-w-0 px-4 py-3 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-l-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 ${
@@ -175,7 +184,18 @@ const TimeDropdown = ({ value, onChange, disabled }) => {
         />
         <button
           type="button"
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onClick={() => {
+            if (!disabled) {
+              // If time is empty and user clicks, set current time as default
+              if (!value || value === '') {
+                const now = new Date()
+                const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+                onChange(currentTime)
+                setInputValue(currentTime)
+              }
+              setIsOpen(!isOpen)
+            }
+          }}
           disabled={disabled}
           className={`flex-shrink-0 px-3 py-3 border-2 border-l-0 border-gray-200 dark:border-gray-600 rounded-r-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200 ${
             disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600'

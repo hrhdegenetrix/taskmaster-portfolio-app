@@ -44,7 +44,8 @@ const Tasks = () => {
     incrementLifetimeCompleted,
     lifetimeCompleted,
     isLoading,
-    invalidateQueries
+    invalidateQueries,
+    getEffectivePriority
   } = useTask()
   
   const { isDark } = useTheme()
@@ -466,6 +467,7 @@ const Tasks = () => {
                 categories={categories}
                 tags={tags}
                 isDark={isDark}
+                getEffectivePriority={getEffectivePriority}
               />
             ))
           )}
@@ -535,9 +537,10 @@ const Tasks = () => {
 }
 
 // Task Card Component
-const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete, getPriorityColor, getStatusColor, getDueDateDisplay, categories, tags, isDark }) => {
+const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete, getPriorityColor, getStatusColor, getDueDateDisplay, categories, tags, isDark, getEffectivePriority }) => {
   const dueDateInfo = getDueDateDisplay(task.dueDate)
   const category = categories.find(c => c.id === task.categoryId)
+  const effectivePriority = getEffectivePriority(task)
 
   return (
     <motion.div
@@ -566,8 +569,8 @@ const TaskCard = ({ task, index, viewMode, onEdit, onToggleCompletion, onDelete,
           >
             {task.completed && <CheckSquare className="w-4 h-4" />}
           </button>
-          <div className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getPriorityColor(task.priority, isDark)} ${task.priority === 'OVERDUE' ? 'animate-pulse' : ''}`}>
-            {task.priority} {task.priority === 'OVERDUE' ? '💀' : task.priority === 'URGENT' ? '🚨' : task.priority === 'HIGH' ? '🔥' : task.priority === 'MEDIUM' ? '⚡' : '🌱'}
+          <div className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getPriorityColor(effectivePriority, isDark)} ${effectivePriority === 'OVERDUE' ? 'animate-pulse' : ''}`}>
+            {effectivePriority} {effectivePriority === 'OVERDUE' ? '💀' : effectivePriority === 'URGENT' ? '🚨' : effectivePriority === 'HIGH' ? '🔥' : effectivePriority === 'MEDIUM' ? '⚡' : '🌱'}
           </div>
         </div>
         

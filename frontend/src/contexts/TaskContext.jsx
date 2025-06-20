@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from 'react-query'
 import { taskService } from '../services/api'
 
@@ -128,6 +128,53 @@ export const TaskProvider = ({ children }) => {
     }
   )
 
+  // Helper function to compute effective priority (including OVERDUE)
+  const getEffectivePriority = (task) => {
+    // Check if task is overdue
+    if (task.dueDate && !task.completed) {
+      const now = new Date()
+      const dueDate = new Date(task.dueDate)
+      if (dueDate < now) {
+        return 'OVERDUE'
+      }
+    }
+    return task.priority
+  }
+
+  // Priority order for sorting (OVERDUE is highest priority)
+  const priorityOrder = {
+    'OVERDUE': 5,
+    'URGENT': 4,
+    'HIGH': 3,
+    'MEDIUM': 2,
+    'LOW': 1
+  }
+
+  // Apply frontend sorting if needed (especially for priority)
+  const sortedTasks = useMemo(() => {
+    if (!tasksData?.tasks) return []
+    
+    let tasks = [...tasksData.tasks]
+    
+    // Apply custom sorting for priority to handle OVERDUE
+    if (state.sort.field === 'priority') {
+      tasks.sort((a, b) => {
+        const aPriority = getEffectivePriority(a)
+        const bPriority = getEffectivePriority(b)
+        const aOrder = priorityOrder[aPriority] || 0
+        const bOrder = priorityOrder[bPriority] || 0
+        
+        if (state.sort.order === 'desc') {
+          return bOrder - aOrder
+        } else {
+          return aOrder - bOrder
+        }
+      })
+    }
+    
+    return tasks
+  }, [tasksData?.tasks, state.sort.field, state.sort.order])
+
   // Fetch categories
   const {
     data: categories,
@@ -163,7 +210,7 @@ export const TaskProvider = ({ children }) => {
   }
 
   const selectAllTasks = () => {
-    const allTaskIds = tasksData?.tasks?.map(task => task.id) || []
+    const allTaskIds = sortedTasks?.map(task => task.id) || []
     dispatch({ type: 'SET_SELECTED_TASKS', payload: allTaskIds })
   }
 
@@ -192,7 +239,7 @@ export const TaskProvider = ({ children }) => {
   }
 
   const getTaskById = (taskId) => {
-    return tasksData?.tasks?.find(task => task.id === taskId)
+    return sortedTasks?.find(task => task.id === taskId)
   }
 
   const getCategoryById = (categoryId) => {
@@ -229,18 +276,18 @@ export const TaskProvider = ({ children }) => {
 
   // Initialize lifetimeTotal from current task count if not set (for existing users)
   useEffect(() => {
-    if (tasksData?.tasks && state.lifetimeTotal === 0) {
-      const currentTaskCount = tasksData.tasks.length
+    if (sortedTasks && state.lifetimeTotal === 0) {
+      const currentTaskCount = sortedTasks.length
       if (currentTaskCount > 0) {
         // Only initialize if there are tasks but no lifetime total recorded
         dispatch({ type: 'LOAD_LIFETIME_TOTAL', payload: currentTaskCount })
         localStorage.setItem('taskmaster-lifetime-total', currentTaskCount.toString())
       }
     }
-  }, [tasksData?.tasks, state.lifetimeTotal])
+  }, [sortedTasks, state.lifetimeTotal])
 
   // Filter tasks based on showCompleted toggle
-  const filteredTasks = (tasksData?.tasks || []).filter(task => {
+  const filteredTasks = sortedTasks.filter(task => {
     if (!state.showCompleted && task.completed) {
       return false // Hide completed tasks when showCompleted is false
     }
@@ -259,7 +306,7 @@ export const TaskProvider = ({ children }) => {
 
     // Data
     tasks: filteredTasks,
-    allTasks: tasksData?.tasks || [], // Keep unfiltered tasks for stats
+    allTasks: sortedTasks, // Use sorted tasks for consistency
     pagination: tasksData?.pagination,
     categories: categories || [],
     tags: tags || [],
@@ -289,6 +336,7 @@ export const TaskProvider = ({ children }) => {
     getTaskById,
     getCategoryById,
     getTagById,
+    getEffectivePriority, // Export the helper function
   }
 
   return (
