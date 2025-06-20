@@ -6,7 +6,9 @@ import {
   Trash2, 
   Moon, 
   Sun,
-  RefreshCw
+  RefreshCw,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTask } from '../contexts/TaskContext'
@@ -16,6 +18,12 @@ const Settings = () => {
   const { isDark, toggleTheme } = useTheme()
   const { lifetimeCompleted } = useTask()
   const [isResetting, setIsResetting] = useState(false)
+  
+  // Default show completed tasks setting
+  const [defaultShowCompleted, setDefaultShowCompleted] = useState(() => {
+    const stored = localStorage.getItem('taskmaster-default-show-completed')
+    return stored ? stored === 'true' : false
+  })
 
   const handleResetLifetimeCount = () => {
     if (window.confirm(`Are you sure you want to reset your lifetime completed count from ${lifetimeCompleted} to 0? This can't be undone! 🔄`)) {
@@ -31,6 +39,17 @@ const Settings = () => {
         toast.success('Lifetime completed count reset! 🔄')
       }, 1000)
     }
+  }
+
+  const handleToggleDefaultShowCompleted = () => {
+    const newValue = !defaultShowCompleted
+    setDefaultShowCompleted(newValue)
+    localStorage.setItem('taskmaster-default-show-completed', newValue.toString())
+    toast.success(
+      newValue 
+        ? 'Tasks page will now show completed tasks by default! 👁️' 
+        : 'Tasks page will now hide completed tasks by default! 🙈'
+    )
   }
 
   const settingsCards = [
@@ -59,6 +78,48 @@ const Settings = () => {
                 }`}
               />
             </button>
+          </div>
+          <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              💡 Your theme preference is automatically saved and will persist across sessions
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: 'Task Display',
+      description: 'Configure how tasks are displayed by default',
+      icon: defaultShowCompleted ? Eye : EyeOff,
+      content: (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">Show Completed Tasks</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Default visibility of completed tasks on Tasks page
+              </p>
+            </div>
+            <button
+              onClick={handleToggleDefaultShowCompleted}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                defaultShowCompleted ? 'bg-green-600' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  defaultShowCompleted ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+          <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {defaultShowCompleted 
+                ? "👁️ Completed tasks will be visible by default when you visit the Tasks page"
+                : "🙈 Completed tasks will be hidden by default when you visit the Tasks page"
+              }
+            </p>
           </div>
         </div>
       )
@@ -122,7 +183,7 @@ const Settings = () => {
       </div>
 
       {/* Settings Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {settingsCards.map((card, index) => {
           const Icon = card.icon
           return (
@@ -170,12 +231,21 @@ const Settings = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             A beautiful task management app built with React, Node.js, and PostgreSQL
           </p>
-          <div className="flex justify-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-            <span>Version 1.0.0</span>
-            <span>•</span>
-            <span>Portfolio Project</span>
-            <span>•</span>
-            <span>Made with ❤️</span>
+          <div className="flex flex-col items-center space-y-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center space-x-4">
+              <span>Version 1.0.0</span>
+              <span>•</span>
+              <span>Portfolio Project for Magdalene Sullivan</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span>📧</span>
+              <a 
+                href="mailto:magda.sullivan@gmail.com" 
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200 font-medium"
+              >
+                magda.sullivan@gmail.com
+              </a>
+            </div>
           </div>
         </div>
       </motion.div>

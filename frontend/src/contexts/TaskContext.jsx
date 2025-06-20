@@ -85,6 +85,12 @@ const taskReducer = (state, action) => {
   }
 }
 
+// Get default show completed setting from localStorage
+const getDefaultShowCompleted = () => {
+  const stored = localStorage.getItem('taskmaster-default-show-completed')
+  return stored ? stored === 'true' : false
+}
+
 const initialState = {
   filters: {
     search: '',
@@ -100,7 +106,7 @@ const initialState = {
   },
   viewMode: 'list', // 'list' | 'grid' | 'kanban'
   selectedTasks: [],
-  showCompleted: false, // Hide completed tasks by default
+  showCompleted: getDefaultShowCompleted(), // Use user's preference or default to false
   lifetimeCompleted: 0, // Track lifetime completed tasks
   lifetimeTotal: 0 // Track lifetime total tasks
 }

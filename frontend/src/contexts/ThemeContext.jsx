@@ -13,24 +13,45 @@ export const useTheme = () => {
 export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(() => {
     // Check localStorage first, then system preference
-    const stored = localStorage.getItem('taskmaster-theme')
-    if (stored) {
-      return stored === 'dark'
+    try {
+      const stored = localStorage.getItem('taskmaster-theme')
+      if (stored) {
+        return stored === 'dark'
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+    } catch (error) {
+      // Fallback to light mode if localStorage is not available
+      console.warn('Failed to access localStorage for theme, defaulting to light mode')
+      return false
     }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
   })
 
   useEffect(() => {
-    // Update document class and localStorage
+    // Update document class and localStorage immediately
     const root = window.document.documentElement
-    if (isDark) {
-      root.classList.add('dark')
-      localStorage.setItem('taskmaster-theme', 'dark')
-    } else {
-      root.classList.remove('dark')
-      localStorage.setItem('taskmaster-theme', 'light')
+    try {
+      if (isDark) {
+        root.classList.add('dark')
+        localStorage.setItem('taskmaster-theme', 'dark')
+      } else {
+        root.classList.remove('dark')
+        localStorage.setItem('taskmaster-theme', 'light')
+      }
+    } catch (error) {
+      console.warn('Failed to save theme preference:', error)
     }
   }, [isDark])
+
+  // Apply theme immediately on mount to prevent flash
+  useEffect(() => {
+    const root = window.document.documentElement
+    const stored = localStorage.getItem('taskmaster-theme')
+    if (stored === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }, [])
 
   useEffect(() => {
     // Listen for system theme changes
