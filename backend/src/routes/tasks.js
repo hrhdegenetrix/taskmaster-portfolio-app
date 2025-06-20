@@ -255,14 +255,14 @@ router.put('/:id', async (req, res) => {
         // Prevent status changes (except to COMPLETED) and priority changes on overdue tasks
         if (status !== undefined && status.toUpperCase() !== 'COMPLETED') {
           return res.status(400).json({ 
-            error: "Can't change the status of an overdue task. Try changing the due date first!",
+            error: "Can't make edits to an overdue task; try changing the time.",
             code: 'TASK_OVERDUE'
           });
         }
         
         if (priority !== undefined && priority !== null && priority.toUpperCase() !== existingTask.priority) {
           return res.status(400).json({ 
-            error: "Can't change the priority of an overdue task. Try changing the due date first!",
+            error: "Can't make edits to an overdue task; try changing the time.",
             code: 'TASK_OVERDUE'
           });
         }
