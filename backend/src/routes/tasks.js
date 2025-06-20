@@ -151,9 +151,7 @@ router.post('/', async (req, res) => {
     // Process due date - frontend sends properly formatted datetime
     let processedDueDate = null;
     if (dueDate) {
-      console.log('Creating task with dueDate:', dueDate);
       processedDueDate = new Date(dueDate);
-      console.log('Parsed as:', processedDueDate.toISOString());
     }
 
     // Create the task
@@ -279,10 +277,7 @@ router.put('/:id', async (req, res) => {
       if (dueDate) {
         // Store the date string directly without timezone conversion
         // Frontend sends properly formatted datetime strings
-        console.log('Received dueDate:', dueDate);
-        const parsedDate = new Date(dueDate);
-        console.log('Parsed date:', parsedDate.toISOString());
-        updateData.dueDate = parsedDate;
+        updateData.dueDate = new Date(dueDate);
       } else {
         updateData.dueDate = null;
       }

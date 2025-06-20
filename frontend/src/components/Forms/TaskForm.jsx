@@ -272,16 +272,21 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
     description: task?.description || '',
     priority: (task?.priority && task.priority !== 'OVERDUE') ? task.priority : 'MEDIUM',
     status: task?.status || 'PENDING',
-    dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    dueDate: task?.dueDate ? task.dueDate.split('T')[0] : new Date().toISOString().split('T')[0],
     dueTime: task?.dueDate ? (() => {
-      const date = new Date(task.dueDate);
+      // Extract time directly from ISO string to avoid timezone conversion
+      const isoString = task.dueDate;
+      const timePart = isoString.split('T')[1]; // Get the time part
+      if (!timePart) return '';
+      
+      const time = timePart.split('.')[0]; // Remove milliseconds and Z
+      const [hours, minutes, seconds] = time.split(':');
+      
       // Check if it's set to end of day (23:59:59) - if so, no specific time was set
-      if (date.getHours() === 23 && date.getMinutes() === 59 && date.getSeconds() === 59) {
+      if (hours === '23' && minutes === '59' && seconds === '59') {
         return '';
       }
-      // Use more reliable time formatting to avoid timezone issues
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
+      
       return `${hours}:${minutes}`;
     })() : '',
     categoryId: task?.categoryId || '',
