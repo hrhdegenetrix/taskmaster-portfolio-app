@@ -129,26 +129,28 @@ export const TaskProvider = ({ children }) => {
   )
 
   // Helper function to compute effective priority (including OVERDUE)
-  const getEffectivePriority = (task) => {
-    // Check if task is overdue
-    if (task.dueDate && !task.completed) {
-      const now = new Date()
-      const dueDate = new Date(task.dueDate)
-      if (dueDate < now) {
-        return 'OVERDUE'
+  const getEffectivePriority = useMemo(() => {
+    return (task) => {
+      // Check if task is overdue
+      if (task.dueDate && !task.completed) {
+        const now = new Date()
+        const dueDate = new Date(task.dueDate)
+        if (dueDate < now) {
+          return 'OVERDUE'
+        }
       }
+      return task.priority
     }
-    return task.priority
-  }
+  }, [])
 
   // Priority order for sorting (OVERDUE is highest priority)
-  const priorityOrder = {
+  const priorityOrder = useMemo(() => ({
     'OVERDUE': 5,
     'URGENT': 4,
     'HIGH': 3,
     'MEDIUM': 2,
     'LOW': 1
-  }
+  }), [])
 
   // Apply frontend sorting if needed (especially for priority)
   const sortedTasks = useMemo(() => {
@@ -171,9 +173,10 @@ export const TaskProvider = ({ children }) => {
         }
       })
     }
+    // For other sorting fields, the backend already sorted them correctly
     
     return tasks
-  }, [tasksData?.tasks, state.sort.field, state.sort.order])
+  }, [tasksData?.tasks, state.sort.field, state.sort.order, getEffectivePriority, priorityOrder])
 
   // Fetch categories
   const {

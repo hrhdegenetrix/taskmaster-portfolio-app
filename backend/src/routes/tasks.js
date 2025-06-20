@@ -47,7 +47,11 @@ router.get('/', async (req, res) => {
     if (sortBy === 'priority') {
       orderBy.priority = sortOrder === 'asc' ? 'asc' : 'desc';
     } else if (sortBy === 'dueDate') {
-      orderBy.dueDate = sortOrder === 'asc' ? 'asc' : 'desc';
+      // Handle null due dates properly with multiple sort fields
+      orderBy = [
+        { dueDate: sortOrder === 'asc' ? 'asc' : 'desc' },
+        { createdAt: 'asc' } // Secondary sort by creation date for tasks with same/null due dates
+      ];
     } else if (sortBy === 'position') {
       orderBy.position = sortOrder === 'asc' ? 'asc' : 'desc';
     } else {
@@ -256,7 +260,7 @@ router.put('/:id', async (req, res) => {
           });
         }
         
-        if (priority !== undefined && priority.toUpperCase() !== existingTask.priority) {
+        if (priority !== undefined && priority !== null && priority.toUpperCase() !== existingTask.priority) {
           return res.status(400).json({ 
             error: "Can't change the priority of an overdue task. Try changing the due date first!",
             code: 'TASK_OVERDUE'
