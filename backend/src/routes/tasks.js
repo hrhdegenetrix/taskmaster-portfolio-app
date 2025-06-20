@@ -236,6 +236,11 @@ router.put('/:id', async (req, res) => {
       position
     } = req.body;
 
+    // Validate request body
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ error: 'Request body cannot be empty' });
+    }
+
     // Check if task exists
     const existingTask = await prisma.task.findUnique({
       where: { id: req.params.id }
@@ -248,6 +253,18 @@ router.put('/:id', async (req, res) => {
     // Allow all edits on tasks, including overdue ones
     // Users should be able to fix overdue tasks however they want
 
+    // Validate status and priority values
+    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+    const validPriorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+
+    if (status !== undefined && status !== null && !validStatuses.includes(status.toUpperCase())) {
+      return res.status(400).json({ error: `Invalid status: ${status}. Must be one of: ${validStatuses.join(', ')}` });
+    }
+
+    if (priority !== undefined && priority !== null && !validPriorities.includes(priority.toUpperCase())) {
+      return res.status(400).json({ error: `Invalid priority: ${priority}. Must be one of: ${validPriorities.join(', ')}` });
+    }
+
     // Prepare update data
     const updateData = {};
     if (title !== undefined) updateData.title = title.trim();
@@ -257,6 +274,10 @@ router.put('/:id', async (req, res) => {
     if (dueDate !== undefined) {
       if (dueDate) {
         const date = new Date(dueDate);
+        // Validate the date
+        if (isNaN(date.getTime())) {
+          return res.status(400).json({ error: `Invalid due date: ${dueDate}` });
+        }
         // If no time is specified, set to end of day (23:59:59)
         if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0) {
           date.setHours(23, 59, 59, 999);
@@ -374,7 +395,8 @@ router.put('/:id', async (req, res) => {
     // Send more specific error information
     res.status(500).json({ 
       error: 'Failed to update task',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
