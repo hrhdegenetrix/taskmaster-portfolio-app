@@ -211,7 +211,20 @@ const TimeDropdown = ({ value, onChange, disabled }) => {
       </div>
       
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+        <div 
+          className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg max-h-48 overflow-y-auto"
+          ref={(el) => {
+            if (el && value) {
+              // Scroll to the selected time when dropdown opens
+              const selectedIndex = timeOptions.findIndex(opt => opt.value === value)
+              if (selectedIndex >= 0) {
+                const buttonHeight = 32 // Approximate height of each button
+                const scrollTop = Math.max(0, (selectedIndex - 2) * buttonHeight) // Show 2 items above
+                setTimeout(() => el.scrollTop = scrollTop, 0)
+              }
+            }
+          }}
+        >
           <div className="p-2">
             <button
               type="button"
@@ -266,7 +279,10 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       if (date.getHours() === 23 && date.getMinutes() === 59 && date.getSeconds() === 59) {
         return '';
       }
-      return date.toTimeString().split(' ')[0].substring(0, 5);
+      // Use more reliable time formatting to avoid timezone issues
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
     })() : '',
     categoryId: task?.categoryId || '',
     selectedTags: task?.tags?.map(t => t.id) || []
@@ -567,30 +583,8 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       tags: formData.selectedTags
     }
 
-    // Only include dueDate if it's actually different from the original task
-    // This prevents unintentional time changes when just updating status/other fields
-    if (isEditing && task?.dueDate) {
-      // Compare the combined datetime with the original task's dueDate
-      const originalDate = new Date(task.dueDate)
-      const newDate = combinedDateTime ? new Date(combinedDateTime) : null
-      
-      // Only include dueDate if it's actually different or if the user intended to change it
-      const originalDateStr = originalDate.toISOString().split('T')[0]
-      const originalTimeStr = originalDate.toTimeString().split(' ')[0].substring(0, 5)
-      const hasOriginalTime = !(originalDate.getHours() === 23 && originalDate.getMinutes() === 59 && originalDate.getSeconds() === 59)
-      
-      // Check if the date or time has actually changed
-      const dateChanged = formData.dueDate !== originalDateStr
-      const timeChanged = formData.dueTime !== (hasOriginalTime ? originalTimeStr : '')
-      
-      if (dateChanged || timeChanged) {
-        taskData.dueDate = combinedDateTime
-      }
-      // If neither changed, don't include dueDate in the update to preserve original time
-    } else {
-      // For new tasks or tasks without existing due dates, always include the dueDate
-      taskData.dueDate = combinedDateTime
-    }
+    // Always include the dueDate for updates - simpler and more reliable
+    taskData.dueDate = combinedDateTime
 
     createTaskMutation.mutate(taskData)
   }
