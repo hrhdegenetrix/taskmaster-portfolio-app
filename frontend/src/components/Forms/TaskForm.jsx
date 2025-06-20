@@ -279,11 +279,14 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       const month = (taskDate.getMonth() + 1).toString().padStart(2, '0');
       const day = taskDate.getDate().toString().padStart(2, '0');
       const localDateStr = `${year}-${month}-${day}`;
-      console.log('📅 Date conversion for editing:', {
-        utcFromDb: task.dueDate,
-        localDateObj: taskDate.toString(),
-        formFieldValue: localDateStr
-      });
+      // Debug only when needed
+      if (window.location.search.includes('debug')) {
+        console.log('📅 Date conversion for editing:', {
+          utcFromDb: task.dueDate,
+          localDateObj: taskDate.toString(),
+          formFieldValue: localDateStr
+        });
+      }
       return localDateStr;
     })() : new Date().toISOString().split('T')[0],
     dueTime: task?.dueDate ? (() => {
@@ -295,16 +298,20 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       
       // Check if it's set to end of day (23:59:59) in local time - if so, no specific time was set
       if (hours === '23' && minutes === '59' && seconds === '59') {
-        console.log('⏰ Time conversion for editing - end of day detected, showing no specific time');
+        if (window.location.search.includes('debug')) {
+          console.log('⏰ Time conversion for editing - end of day detected, showing no specific time');
+        }
         return '';
       }
       
       const localTimeStr = `${hours}:${minutes}`;
-      console.log('⏰ Time conversion for editing:', {
-        utcFromDb: task.dueDate,
-        localDateObj: taskDate.toString(),
-        formFieldValue: localTimeStr
-      });
+      if (window.location.search.includes('debug')) {
+        console.log('⏰ Time conversion for editing:', {
+          utcFromDb: task.dueDate,
+          localDateObj: taskDate.toString(),
+          formFieldValue: localTimeStr
+        });
+      }
       return localTimeStr;
     })() : '',
     categoryId: task?.categoryId || '',
@@ -367,8 +374,17 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
         // Enhanced cache invalidation for immediate refresh
         await Promise.all([
           queryClient.invalidateQueries('tasks'),
+          queryClient.invalidateQueries('categories'),
+          queryClient.invalidateQueries('tags'),
           queryClient.refetchQueries('tasks', { active: true })
         ]);
+        
+        // For overdue task fixes, ensure longer delay for proper refresh
+        const delayMs = formData._wasOverdueNowFuture ? 500 : 100;
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        
+        // Double-check that the cache is actually refreshed
+        await queryClient.refetchQueries('tasks');
         
         // Force immediate background refresh
         invalidateQueries()
@@ -645,6 +661,16 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       // If task was overdue (old date was past) but new date is in future
       const wasOverdue = oldDate < now;
       const willBeFuture = newDate > now;
+      
+      console.log('🔍 Overdue Analysis:', {
+        wasOverdue,
+        willBeFuture,
+        oldDate: oldDate.toString(),
+        newDate: newDate.toString(),
+        now: now.toString(),
+        oldDateIsPast: oldDate < now,
+        newDateIsFuture: newDate > now
+      });
       
       if (wasOverdue && willBeFuture) {
         // Auto-upgrade priority if it was overdue but now in future

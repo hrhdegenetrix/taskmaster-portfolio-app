@@ -197,6 +197,7 @@ const Tasks = () => {
   const getDueDateDisplay = (dueDate) => {
     if (!dueDate) return null
     const date = new Date(dueDate)
+    const now = new Date()
     
     // For date-only tasks, consider them due at end of day
     // Set the comparison time to end of today (23:59:59)
@@ -204,6 +205,19 @@ const Tasks = () => {
     endOfToday.setHours(23, 59, 59, 999)
     
     const hasTime = date.getHours() !== 23 || date.getMinutes() !== 59 || date.getSeconds() !== 59;
+    
+    // Debug logging for overdue detection (only for debugging)
+    if (window.location.search.includes('debug')) {
+      console.log('📅 Due Date Display Analysis:', {
+        dueDate,
+        parsedDate: date.toString(),
+        now: now.toString(),
+        hasTime,
+        isBeforeNow: date < now,
+        isToday: isToday(date),
+        isTomorrow: isTomorrow(date)
+      });
+    }
     
     if (isToday(date)) {
       if (hasTime) {
@@ -222,13 +236,15 @@ const Tasks = () => {
     // Only mark as overdue if the date is actually past (not just today)
     const startOfToday = new Date()
     startOfToday.setHours(0, 0, 0, 0)
-    if (date < startOfToday) return { text: 'Overdue', color: 'text-red-600 dark:text-red-400', emoji: '🚨' }
+    if (date < startOfToday) {
+      return { text: 'Overdue', color: 'text-red-600 dark:text-red-400', emoji: '🚨' }
+    }
     
     return { 
       text: hasTime ? format(date, 'MMM dd, h:mm a') : format(date, 'MMM dd'), 
       color: 'text-gray-600 dark:text-gray-400', 
       emoji: '📅' 
-    }
+    };
   }
 
   if (isLoading) {

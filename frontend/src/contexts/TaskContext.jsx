@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, useMemo, useCallback } from 'react'
 import { useQuery, useQueryClient } from 'react-query'
 import { taskService } from '../services/api'
 
@@ -164,19 +164,17 @@ export const TaskProvider = ({ children }) => {
   )
 
   // Helper function to compute effective priority (including OVERDUE)
-  const getEffectivePriority = useMemo(() => {
-    return (task) => {
-      // Check if task is overdue
-      if (task.dueDate && !task.completed) {
-        const now = new Date()
-        const dueDate = new Date(task.dueDate)
-        if (dueDate < now) {
-          return 'OVERDUE'
-        }
+  const getEffectivePriority = useCallback((task) => {
+    // Check if task is overdue
+    if (task.dueDate && !task.completed) {
+      const now = new Date()
+      const dueDate = new Date(task.dueDate)
+      if (dueDate < now) {
+        return 'OVERDUE'
       }
-      return task.priority
     }
-  }, [])
+    return task.priority
+  }, []) // Use useCallback instead of useMemo for better performance
 
   // Priority order for sorting (OVERDUE is highest priority)
   const priorityOrder = useMemo(() => ({
