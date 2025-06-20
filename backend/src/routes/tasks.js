@@ -148,15 +148,12 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Task title is required' });
     }
 
-    // Process due date - set to end of day if no time specified
+    // Process due date - frontend sends properly formatted datetime
     let processedDueDate = null;
     if (dueDate) {
-      const date = new Date(dueDate);
-      // If no time is specified, set to end of day (23:59:59)
-      if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0) {
-        date.setHours(23, 59, 59, 999);
-      }
-      processedDueDate = date;
+      console.log('Creating task with dueDate:', dueDate);
+      processedDueDate = new Date(dueDate);
+      console.log('Parsed as:', processedDueDate.toISOString());
     }
 
     // Create the task
@@ -280,16 +277,12 @@ router.put('/:id', async (req, res) => {
     if (priority !== undefined) updateData.priority = priority.toUpperCase();
     if (dueDate !== undefined) {
       if (dueDate) {
-        const date = new Date(dueDate);
-        // Validate the date
-        if (isNaN(date.getTime())) {
-          return res.status(400).json({ error: `Invalid due date: ${dueDate}` });
-        }
-        // If no time is specified, set to end of day (23:59:59)
-        if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0) {
-          date.setHours(23, 59, 59, 999);
-        }
-        updateData.dueDate = date;
+        // Store the date string directly without timezone conversion
+        // Frontend sends properly formatted datetime strings
+        console.log('Received dueDate:', dueDate);
+        const parsedDate = new Date(dueDate);
+        console.log('Parsed date:', parsedDate.toISOString());
+        updateData.dueDate = parsedDate;
       } else {
         updateData.dueDate = null;
       }

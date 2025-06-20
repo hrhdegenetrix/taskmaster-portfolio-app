@@ -560,15 +560,15 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       return
     }
 
-    // Combine date and time if both are provided
+    // Combine date and time - no timezone conversion, treat as local time
     let combinedDateTime = null;
     if (formData.dueDate) {
-      combinedDateTime = formData.dueDate;
       if (formData.dueTime) {
-        combinedDateTime += `T${formData.dueTime}:00`;
+        // Send raw datetime string without timezone info - backend treats as local
+        combinedDateTime = `${formData.dueDate}T${formData.dueTime}:00`;
       } else {
-        // If no time specified, set to end of day (will be handled by backend)
-        combinedDateTime += `T00:00:00`;
+        // If no time specified, set to end of day
+        combinedDateTime = `${formData.dueDate}T23:59:59`;
       }
     }
 
