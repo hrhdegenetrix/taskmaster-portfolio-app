@@ -11,20 +11,37 @@ export const useTheme = () => {
 }
 
 export const ThemeProvider = ({ children }) => {
+  // Keep track of the permanent preference separate from current state
+  const [permanentPreference, setPermanentPreference] = useState(() => {
+    try {
+      const settingsPreference = localStorage.getItem('taskmaster-theme-preference')
+      if (settingsPreference) {
+        return settingsPreference
+      }
+      // If no preference set, use system default
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    } catch (error) {
+      return 'light'
+    }
+  })
+
   const [isDark, setIsDark] = useState(() => {
-    // On app startup, always use Settings preference (ignore session overrides)
+    // On app startup, always use the permanent preference
     try {
       // Clear any session overrides from previous sessions
       localStorage.removeItem('taskmaster-theme-session')
       
-      // Check for Settings preference (user's chosen default)
+      // Always start with permanent preference
       const settingsPreference = localStorage.getItem('taskmaster-theme-preference')
       if (settingsPreference) {
+        console.log(`App starting with saved preference: ${settingsPreference}`)
         return settingsPreference === 'dark'
       }
       
       // Fall back to system preference if no Settings preference is set
-      return window.matchMedia('(prefers-color-scheme: dark)').matches
+      const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches
+      console.log(`App starting with system preference: ${systemPreference ? 'dark' : 'light'}`)
+      return systemPreference
     } catch (error) {
       // Fallback to light mode if localStorage is not available
       console.warn('Failed to access localStorage for theme, defaulting to light mode')
@@ -66,8 +83,9 @@ export const ThemeProvider = ({ children }) => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handleChange = (e) => {
       // Only auto-switch if user hasn't set a preference in Settings
-      const settingsPreference = localStorage.getItem('taskmaster-theme-preference')
-      if (!settingsPreference) {
+      if (!localStorage.getItem('taskmaster-theme-preference')) {
+        const newTheme = e.matches ? 'dark' : 'light'
+        setPermanentPreference(newTheme)
         setIsDark(e.matches)
       }
     }
@@ -76,35 +94,46 @@ export const ThemeProvider = ({ children }) => {
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [])
 
+  // Reset to permanent preference (called when needed)
+  const resetToPreference = () => {
+    setIsDark(permanentPreference === 'dark')
+  }
+
   // Temporary toggle for sidebar/top bar (session only, not persisted)
   const toggleTheme = () => {
     setIsDark(!isDark)
-    // This is purely temporary for current session - not saved to localStorage
-    // On app refresh, it will revert to Settings preference
+    // This is purely temporary for current session - not saved anywhere
+    // On app refresh, it will revert to permanent preference
+    console.log(`Theme temporarily toggled to ${!isDark ? 'dark' : 'light'} (permanent preference remains: ${permanentPreference})`)
   }
 
   // Set theme preference from Settings (permanent default)
   const setThemePreference = (theme) => {
     const newValue = theme === 'dark'
-    setIsDark(newValue)
+    setPermanentPreference(theme) // Update permanent preference state
+    setIsDark(newValue) // Apply immediately
     try {
       // Save as permanent preference - this will be the default on app startup
       localStorage.setItem('taskmaster-theme-preference', theme)
+      console.log(`Permanent theme preference set to: ${theme}`)
     } catch (error) {
       console.warn('Failed to save theme preference:', error)
     }
   }
 
   const setTheme = (theme) => {
+    // This is just for temporary changes, doesn't affect permanent preference
     setIsDark(theme === 'dark')
   }
 
   const value = {
     isDark,
     theme: isDark ? 'dark' : 'light',
-    toggleTheme, // Temporary toggle for sidebar/top bar
-    setTheme,
-    setThemePreference, // Permanent preference for Settings
+    permanentPreference, // The user's saved default preference
+    toggleTheme, // Temporary toggle for sidebar/top bar (doesn't save)
+    setTheme, // Temporary theme change (doesn't save)
+    setThemePreference, // Permanent preference for Settings (saves to localStorage)
+    resetToPreference, // Reset current theme to permanent preference
   }
 
   return (

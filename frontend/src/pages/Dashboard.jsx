@@ -15,28 +15,28 @@ import { format, isToday, isTomorrow, isPast } from 'date-fns'
 import TaskForm from '../components/Forms/TaskForm'
 
 const Dashboard = () => {
-  const { tasks, categories, tags, lifetimeCompleted, isLoading } = useTask()
+  const { tasks, allTasks, categories, tags, lifetimeCompleted, isLoading } = useTask()
   const [showCreateForm, setShowCreateForm] = useState(false)
 
-  // Calculate statistics
+  // Calculate statistics using allTasks (complete data, not filtered by visibility)
   const stats = {
-    total: tasks.length,
-    completed: tasks.filter(t => t.completed).length,
-    pending: tasks.filter(t => !t.completed).length,
-    overdue: tasks.filter(t => t.dueDate && isPast(new Date(t.dueDate)) && !t.completed).length,
-    dueToday: tasks.filter(t => t.dueDate && isToday(new Date(t.dueDate)) && !t.completed).length,
-    dueTomorrow: tasks.filter(t => t.dueDate && isTomorrow(new Date(t.dueDate)) && !t.completed).length,
+    total: allTasks.length,
+    completed: allTasks.filter(t => t.completed).length,
+    pending: allTasks.filter(t => !t.completed).length,
+    overdue: allTasks.filter(t => t.dueDate && isPast(new Date(t.dueDate)) && !t.completed).length,
+    dueToday: allTasks.filter(t => t.dueDate && isToday(new Date(t.dueDate)) && !t.completed).length,
+    dueTomorrow: allTasks.filter(t => t.dueDate && isTomorrow(new Date(t.dueDate)) && !t.completed).length,
   }
 
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
 
-  // Recent tasks (last 5 completed or created)
-  const recentTasks = tasks
+  // Recent tasks (last 5 completed or created) - use allTasks for complete picture
+  const recentTasks = allTasks
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
     .slice(0, 5)
 
-  // Upcoming tasks (due soon)
-  const upcomingTasks = tasks
+  // Upcoming tasks (due soon) - use allTasks for complete picture
+  const upcomingTasks = allTasks
     .filter(t => t.dueDate && !t.completed)
     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
     .slice(0, 5)

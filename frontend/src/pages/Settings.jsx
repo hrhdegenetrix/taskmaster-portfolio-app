@@ -15,9 +15,12 @@ import { useTask } from '../contexts/TaskContext'
 import toast from 'react-hot-toast'
 
 const Settings = () => {
-  const { isDark, setThemePreference } = useTheme()
+  const { isDark, setThemePreference, permanentPreference, resetToPreference } = useTheme()
   const { lifetimeCompleted } = useTask()
   const [isResetting, setIsResetting] = useState(false)
+  
+  // Check if current theme differs from permanent preference
+  const isTemporaryOverride = (isDark ? 'dark' : 'light') !== permanentPreference
   
   // Default show completed tasks setting
   const [defaultShowCompleted, setDefaultShowCompleted] = useState(() => {
@@ -59,7 +62,8 @@ const Settings = () => {
   }
 
   const handleToggleThemePreference = () => {
-    const newTheme = isDark ? 'light' : 'dark'
+    // Toggle based on permanent preference, not current temporary state
+    const newTheme = permanentPreference === 'dark' ? 'light' : 'dark'
     setThemePreference(newTheme)
     toast.success(
       newTheme === 'dark'
@@ -72,7 +76,7 @@ const Settings = () => {
     {
       title: 'Appearance',
       description: 'Customize the look and feel of TaskMaster',
-      icon: isDark ? Sun : Moon,
+      icon: permanentPreference === 'dark' ? Sun : Moon,
       content: (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -85,12 +89,12 @@ const Settings = () => {
             <button
               onClick={handleToggleThemePreference}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                isDark ? 'bg-primary-600' : 'bg-gray-200'
+                permanentPreference === 'dark' ? 'bg-primary-600' : 'bg-gray-200'
               }`}
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  isDark ? 'translate-x-6' : 'translate-x-1'
+                  permanentPreference === 'dark' ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
             </button>
@@ -99,6 +103,19 @@ const Settings = () => {
             <p className="text-xs text-gray-500 dark:text-gray-400">
               💡 This sets your default theme preference. The app will always open with this theme. You can still use the sidebar toggle for temporary changes during your session.
             </p>
+            {isTemporaryOverride && (
+              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">
+                  ℹ️ You're currently using a temporary {isDark ? 'dark' : 'light'} theme override. Your permanent preference is <strong>{permanentPreference} mode</strong>.
+                </p>
+                <button
+                  onClick={resetToPreference}
+                  className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                >
+                  Reset to {permanentPreference} mode
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )
