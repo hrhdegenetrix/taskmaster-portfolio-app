@@ -211,7 +211,10 @@ export const TaskProvider = ({ children }) => {
   }
 
   const setSort = (field, order = 'desc') => {
-    dispatch({ type: 'SET_SORT', payload: { field, order } })
+    const sortPayload = { field, order }
+    dispatch({ type: 'SET_SORT', payload: sortPayload })
+    // Persist sort state to localStorage
+    localStorage.setItem('taskmaster-sort', JSON.stringify(sortPayload))
   }
 
   const setViewMode = (mode) => {
@@ -293,11 +296,24 @@ export const TaskProvider = ({ children }) => {
     return tags?.find(tag => tag.id === tagId)
   }
 
-  // Load view mode and lifetime counts from localStorage on mount
+  // Load view mode, sort state, and lifetime counts from localStorage on mount
   useEffect(() => {
     const savedViewMode = localStorage.getItem('taskmaster-view-mode')
     if (savedViewMode && ['list', 'grid', 'kanban'].includes(savedViewMode)) {
       dispatch({ type: 'SET_VIEW_MODE', payload: savedViewMode })
+    }
+
+    const savedSort = localStorage.getItem('taskmaster-sort')
+    if (savedSort) {
+      try {
+        const sortData = JSON.parse(savedSort)
+        if (sortData && sortData.field && sortData.order) {
+          dispatch({ type: 'SET_SORT', payload: sortData })
+        }
+      } catch (error) {
+        // If parsing fails, use default sort
+        console.log('Failed to parse saved sort state, using default')
+      }
     }
 
     const savedLifetimeCompleted = localStorage.getItem('taskmaster-lifetime-completed')

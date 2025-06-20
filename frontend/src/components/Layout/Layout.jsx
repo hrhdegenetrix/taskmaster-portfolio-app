@@ -69,14 +69,6 @@ const Layout = ({ children }) => {
       emoji: '✅'
     },
     {
-      path: '/categories',
-      icon: FolderOpen,
-      label: 'Categories',
-      description: 'Organize by category 🗂️',
-      count: categories?.length || 0,
-      emoji: '📁'
-    },
-    {
       path: '/analytics',
       icon: BarChart3,
       label: 'Analytics',

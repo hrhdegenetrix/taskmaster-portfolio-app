@@ -365,8 +365,8 @@ const Tasks = () => {
               }}
               className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              <option value="dueDate-asc">📅 Due Date (Earliest)</option>
-              <option value="dueDate-desc">📅 Due Date (Latest)</option>
+              <option value="dueDate-asc">📅 Earliest Due Date</option>
+              <option value="dueDate-desc">📅 Latest Due Date</option>
               <option value="priority-desc">🔥 Priority (High to Low)</option>
               <option value="priority-asc">🔥 Priority (Low to High)</option>
               <option value="createdAt-desc">🕒 Recently Added</option>
