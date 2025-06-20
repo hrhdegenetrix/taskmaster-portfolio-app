@@ -261,8 +261,15 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: `Invalid status: ${status}. Must be one of: ${validStatuses.join(', ')}` });
     }
 
-    if (priority !== undefined && priority !== null && !validPriorities.includes(priority.toUpperCase())) {
-      return res.status(400).json({ error: `Invalid priority: ${priority}. Must be one of: ${validPriorities.join(', ')}` });
+    // Handle the special case where frontend might send "OVERDUE" priority
+    if (priority !== undefined && priority !== null) {
+      if (priority.toUpperCase() === 'OVERDUE') {
+        // Convert OVERDUE to HIGH priority (since overdue tasks are important)
+        console.log('Converting OVERDUE priority to HIGH');
+        priority = 'HIGH';
+      } else if (!validPriorities.includes(priority.toUpperCase())) {
+        return res.status(400).json({ error: `Invalid priority: ${priority}. Must be one of: ${validPriorities.join(', ')}` });
+      }
     }
 
     // Prepare update data

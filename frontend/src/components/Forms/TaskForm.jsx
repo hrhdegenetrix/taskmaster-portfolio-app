@@ -257,7 +257,7 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
   const [formData, setFormData] = useState({
     title: task?.title || '',
     description: task?.description || '',
-    priority: task?.priority || 'MEDIUM',
+    priority: (task?.priority && task.priority !== 'OVERDUE') ? task.priority : 'MEDIUM',
     status: task?.status || 'PENDING',
     dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     dueTime: task?.dueDate ? (() => {
@@ -556,11 +556,12 @@ const TaskForm = ({ task = null, onClose, categories, tags }) => {
       }
     }
 
-    // Prepare task data
+    // Prepare task data - ensure priority is never "OVERDUE"
+    const validPriority = formData.priority === 'OVERDUE' ? 'HIGH' : formData.priority;
     const taskData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
-      priority: formData.priority,
+      priority: validPriority,
       status: formData.status,
       categoryId: formData.categoryId || null,
       tags: formData.selectedTags
