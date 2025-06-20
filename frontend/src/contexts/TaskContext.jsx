@@ -54,6 +54,11 @@ const taskReducer = (state, action) => {
         ...state,
         showCompleted: !state.showCompleted
       }
+    case 'SET_SHOW_COMPLETED':
+      return {
+        ...state,
+        showCompleted: action.payload
+      }
     case 'INCREMENT_LIFETIME_COMPLETED':
       const newLifetimeCount = state.lifetimeCompleted + 1
       // Save to localStorage
@@ -230,6 +235,35 @@ export const TaskProvider = ({ children }) => {
   const toggleShowCompleted = () => {
     dispatch({ type: 'TOGGLE_SHOW_COMPLETED' })
   }
+
+  // Listen for changes to the default show completed setting
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'taskmaster-default-show-completed') {
+        const newValue = e.newValue === 'true'
+        if (newValue !== state.showCompleted) {
+          dispatch({ type: 'SET_SHOW_COMPLETED', payload: newValue })
+        }
+      }
+    }
+
+    const handleCustomSettingChange = (e) => {
+      if (e.detail && e.detail.setting === 'showCompleted') {
+        dispatch({ type: 'SET_SHOW_COMPLETED', payload: e.detail.value })
+      }
+    }
+
+    // Listen for localStorage changes from other tabs/windows
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Listen for custom events from settings page
+    window.addEventListener('taskmaster-setting-changed', handleCustomSettingChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('taskmaster-setting-changed', handleCustomSettingChange)
+    }
+  }, [state.showCompleted])
 
   const incrementLifetimeCompleted = () => {
     dispatch({ type: 'INCREMENT_LIFETIME_COMPLETED' })

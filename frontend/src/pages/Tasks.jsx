@@ -212,22 +212,22 @@ const Tasks = () => {
     
     if (isToday(date)) {
       if (hasTime) {
-        return { text: `Due today at ${format(date, 'h:mm a')}`, color: 'text-orange-600', emoji: '⚡' }
+        return { text: `Due today at ${format(date, 'h:mm a')}`, color: 'text-orange-600 dark:text-orange-400', emoji: '⚡' }
       }
-      return { text: 'Due today', color: 'text-orange-600', emoji: '⚡' }
+      return { text: 'Due today', color: 'text-orange-600 dark:text-orange-400', emoji: '⚡' }
     }
     
     if (isTomorrow(date)) {
       if (hasTime) {
-        return { text: `Due tomorrow at ${format(date, 'h:mm a')}`, color: 'text-yellow-600', emoji: '⏰' }
+        return { text: `Due tomorrow at ${format(date, 'h:mm a')}`, color: 'text-yellow-600 dark:text-yellow-400', emoji: '⏰' }
       }
-      return { text: 'Due tomorrow', color: 'text-yellow-600', emoji: '⏰' }
+      return { text: 'Due tomorrow', color: 'text-yellow-600 dark:text-yellow-400', emoji: '⏰' }
     }
     
     // Only mark as overdue if the date is actually past (not just today)
     const startOfToday = new Date()
     startOfToday.setHours(0, 0, 0, 0)
-    if (date < startOfToday) return { text: 'Overdue', color: 'text-red-600', emoji: '🚨' }
+    if (date < startOfToday) return { text: 'Overdue', color: 'text-red-600 dark:text-red-400', emoji: '🚨' }
     
     return { 
       text: hasTime ? format(date, 'MMM dd, h:mm a') : format(date, 'MMM dd'), 
@@ -261,7 +261,7 @@ const Tasks = () => {
         </div>
         <button
           onClick={() => setShowCreateForm(true)}
-          className="bg-gradient-to-r from-primary-500 via-accent-500 to-fun-500 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 animate-bounce-soft"
+          className="bg-gradient-to-r from-primary-500 via-accent-500 to-fun-500 dark:from-primary-700 dark:via-accent-700 dark:to-fun-700 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 animate-bounce-soft"
         >
           <Plus className="w-5 h-5 mr-2 inline" />
           Create New Task ✨
@@ -396,7 +396,7 @@ const Tasks = () => {
                 <button
                   onClick={handleDeleteAllCompleted}
                   disabled={deleteAllCompletedMutation.isLoading}
-                  className={`px-3 py-1 text-xs rounded-full font-medium transition-all duration-200 transform hover:scale-105 bg-red-100 text-red-700 hover:bg-red-200 ${deleteAllCompletedMutation.isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  className={`px-3 py-1 text-xs rounded-full font-medium transition-all duration-200 transform hover:scale-105 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 ${deleteAllCompletedMutation.isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                   title="Delete all completed tasks"
                 >
                   {deleteAllCompletedMutation.isLoading ? (
@@ -407,7 +407,7 @@ const Tasks = () => {
                 </button>
               ) : (
                 <span
-                  className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full font-medium"
+                  className="px-3 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full font-medium"
                   title={`${allTasks.filter(t => t.completed).length} completed tasks are hidden`}
                 >
                   {allTasks.filter(t => t.completed).length} hidden
@@ -418,7 +418,7 @@ const Tasks = () => {
 
           <div className="text-sm text-gray-600 dark:text-gray-400">
             <span className="font-medium">{showCompleted ? allTasks.length : tasks.length}</span> tasks shown •{' '}
-            <span className="font-medium text-green-600">{lifetimeCompleted}</span> completed 🎉
+            <span className="font-medium text-green-600 dark:text-green-400">{lifetimeCompleted}</span> completed 🎉
           </div>
         </div>
       </div>
@@ -445,7 +445,7 @@ const Tasks = () => {
               </p>
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="bg-gradient-to-r from-primary-500 to-accent-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                className="bg-gradient-to-r from-primary-500 to-accent-500 dark:from-primary-700 dark:to-accent-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
               >
                 <Plus className="w-5 h-5 mr-2 inline" />
                 Create Your First Task 🚀

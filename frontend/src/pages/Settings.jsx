@@ -15,7 +15,7 @@ import { useTask } from '../contexts/TaskContext'
 import toast from 'react-hot-toast'
 
 const Settings = () => {
-  const { isDark, toggleTheme } = useTheme()
+  const { isDark, setThemePreference } = useTheme()
   const { lifetimeCompleted } = useTask()
   const [isResetting, setIsResetting] = useState(false)
   
@@ -45,10 +45,26 @@ const Settings = () => {
     const newValue = !defaultShowCompleted
     setDefaultShowCompleted(newValue)
     localStorage.setItem('taskmaster-default-show-completed', newValue.toString())
+    
+    // Dispatch custom event to notify TaskContext immediately
+    window.dispatchEvent(new CustomEvent('taskmaster-setting-changed', {
+      detail: { setting: 'showCompleted', value: newValue }
+    }))
+    
     toast.success(
       newValue 
         ? 'Tasks page will now show completed tasks by default! 👁️' 
         : 'Tasks page will now hide completed tasks by default! 🙈'
+    )
+  }
+
+  const handleToggleThemePreference = () => {
+    const newTheme = isDark ? 'light' : 'dark'
+    setThemePreference(newTheme)
+    toast.success(
+      newTheme === 'dark'
+        ? 'Dark mode set as default! The app will open in dark mode. 🌙'
+        : 'Light mode set as default! The app will open in light mode. ☀️'
     )
   }
 
@@ -67,7 +83,7 @@ const Settings = () => {
               </p>
             </div>
             <button
-              onClick={toggleTheme}
+              onClick={handleToggleThemePreference}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                 isDark ? 'bg-primary-600' : 'bg-gray-200'
               }`}
@@ -81,7 +97,7 @@ const Settings = () => {
           </div>
           <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              💡 Your theme preference is automatically saved and will persist across sessions
+              💡 This sets your default theme preference. The app will always open with this theme. You can still use the sidebar toggle for temporary changes during your session.
             </p>
           </div>
         </div>
@@ -145,7 +161,7 @@ const Settings = () => {
           <button
             onClick={handleResetLifetimeCount}
             disabled={isResetting}
-            className={`w-full flex items-center justify-center px-4 py-3 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all duration-200 transform hover:scale-105 ${
+            className={`w-full flex items-center justify-center px-4 py-3 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 transform hover:scale-105 ${
               isResetting ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >

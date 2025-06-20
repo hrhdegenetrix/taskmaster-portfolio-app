@@ -28,7 +28,7 @@ const UrgentTaskAlert = () => {
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -50 }}
-        className="bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white shadow-lg border-b border-red-800"
+        className="bg-gradient-to-r from-red-500 via-red-600 to-red-700 dark:from-red-800 dark:via-red-900 dark:to-red-950 text-white shadow-lg border-b border-red-800 dark:border-red-900"
       >
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">

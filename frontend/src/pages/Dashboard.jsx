@@ -105,7 +105,7 @@ const Dashboard = () => {
         </div>
         <button
           onClick={() => setShowCreateForm(true)}
-          className="bg-gradient-to-r from-primary-500 via-accent-500 to-fun-500 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 animate-bounce-soft"
+          className="bg-gradient-to-r from-primary-500 via-accent-500 to-fun-500 dark:from-primary-700 dark:via-accent-700 dark:to-fun-700 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 animate-bounce-soft"
         >
           <Plus className="w-5 h-5 mr-2 inline" />
           Create New Task ✨
@@ -302,7 +302,7 @@ const Dashboard = () => {
                         {task.title}
                       </p>
                       <p className={`text-xs ${
-                        isOverdue ? 'text-red-500' : isDueToday ? 'text-yellow-600' : 'text-gray-500 dark:text-gray-400'
+                        isOverdue ? 'text-red-500 dark:text-red-400' : isDueToday ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400'
                       }`}>
                         {isOverdue ? 'Overdue' : isDueToday ? 'Due today' : format(dueDate, 'MMM dd, yyyy')}
                       </p>
